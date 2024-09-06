@@ -23,6 +23,7 @@ use super::{
 };
 
 #[expect(dead_code)]
+#[derive(Debug, PartialEq)]
 pub struct MaybePublic<T> {
     is_pub: bool,
     inner: T,
@@ -179,6 +180,7 @@ impl Parsable for RawTopLevelStatement {
             Let::parser().map(Self::Let),
             FnDef::parser().map(Self::FnDef),
         ))
+        .padded()
     }
 }
 
