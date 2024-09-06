@@ -109,15 +109,37 @@ fn test_fn_call() {
     )
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Variable(pub Ident);
+
+impl Parsable for Variable {
+    fn parser() -> impl Parser<char, Self, Error = ParserError> {
+        Ident::parser().map(Self)
+    }
+}
+
+#[test]
+fn test_variable() {
+    let parse = |str| Variable::parser().parse(str);
+
+    assert_eq!(
+        parse("var_name").unwrap(),
+        Variable(Ident::from_str("var_name"))
+    );
+    assert!(parse("1test").is_err())
+}
+
 /// An expression that has a value/can return something
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Expression {
     BinExpr(Box<BinExpr>),
 
+    FnCall(FnCall),
+    Variable(Variable),
+
     NumLit(NumLit),
     StringLit(StringLit),
-    FnCall(FnCall),
     // TODO add variables
 }
 
@@ -131,10 +153,13 @@ impl Expression {
                 // Since BinExpr can start with an expression it needs to be first.
                 BinExpr::parser_with_precedence(precedence)
                     .map(|bin_expr| Self::BinExpr(Box::new(bin_expr))),
+                // a `FnCall` needs to be parsed first because they both start
+                // with an Ident but a `FnCall` is longer.
+                FnCall::parser_with(expr.clone()).map(Self::FnCall),
+                Variable::parser().map(Self::Variable),
                 // self contained expressions do not need a specific order
                 NumLit::parser().map(Self::NumLit),
                 StringLit::parser().map(Self::StringLit),
-                FnCall::parser_with(expr.clone()).map(Self::FnCall),
             ))
         })
     }
