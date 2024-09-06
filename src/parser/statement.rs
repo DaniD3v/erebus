@@ -22,7 +22,6 @@ use super::{
     },
 };
 
-#[expect(dead_code)]
 #[derive(Debug, PartialEq)]
 pub struct MaybePublic<T> {
     is_pub: bool,
@@ -161,7 +160,6 @@ fn test_fn() {
 }
 
 // TODO test
-#[expect(dead_code)]
 pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 
 /// The statements you can put at the outermost scope of each file.
