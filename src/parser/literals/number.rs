@@ -4,7 +4,10 @@ use chumsky::{
     text, Parser,
 };
 
-use crate::parser::{parsable::Parsable, syntax_elements::DotOp};
+use crate::parser::{
+    parsable::{Parsable, ParserError},
+    syntax_elements::DotOp,
+};
 
 fn based_float_literal_to_value(base: u32, int: &str, fractional: &str) -> f64 {
     let int = u64::from_str_radix(int, base).unwrap() as f64;
@@ -39,7 +42,7 @@ pub struct NumLit(pub f64);
 impl NumLit {
     fn raw_base_parser<const BASE: u32>(
         symbol: &'static str,
-    ) -> impl Parser<char, Self, Error = Simple<char>> {
+    ) -> impl Parser<char, Self, Error = ParserError> {
         just(symbol)
             .ignored()
             // ignore leading zeros
@@ -64,7 +67,7 @@ impl NumLit {
 }
 
 impl Parsable for NumLit {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {

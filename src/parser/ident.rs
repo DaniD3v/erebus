@@ -1,11 +1,10 @@
 use chumsky::{
-    error::Simple,
     prelude::{choice, just},
     text::{ident, TextParser},
     Parser,
 };
 
-use super::parsable::Parsable;
+use super::parsable::{Parsable, ParserError};
 
 // Alias for readability.
 pub type Type = Ident;
@@ -14,7 +13,7 @@ pub type Type = Ident;
 pub struct Ident(String);
 
 impl Parsable for Ident {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -39,7 +38,7 @@ pub struct IdentWithType {
 }
 
 impl Parsable for IdentWithType {
-    fn parser() -> impl chumsky::Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+    fn parser() -> impl chumsky::Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -97,7 +96,7 @@ impl From<IdentWithType> for IdentWithOptionalType {
 }
 
 impl Parsable for IdentWithOptionalType {
-    fn parser() -> impl Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {

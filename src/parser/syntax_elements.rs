@@ -7,6 +7,7 @@ use chumsky::{
 use super::{
     bin_ops::{GenericBinOp, HasPrecedence, Precedence},
     parsable::Parsable,
+    ParserError,
 };
 
 macro_rules! generate_parsable {
@@ -15,7 +16,7 @@ macro_rules! generate_parsable {
         pub struct $ident;
 
         impl Parsable for $ident {
-            fn parser() -> impl chumsky::Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+            fn parser() -> impl chumsky::Parser<char, Self, Error = ParserError>
             where
                 Self: Sized,
             {

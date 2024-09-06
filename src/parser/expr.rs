@@ -1,5 +1,4 @@
 use chumsky::{
-    error::Simple,
     prelude::{choice, recursive},
     Parser,
 };
@@ -24,7 +23,7 @@ pub struct CodeScope {
 }
 
 impl Parsable for CodeScope {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -77,7 +76,7 @@ pub struct FnCall {
 
 impl FnCall {
     fn parser_with(
-        existing_parser: impl Parser<char, Expression, Error = super::parsable::ParserError>,
+        existing_parser: impl Parser<char, Expression, Error = ParserError>,
     ) -> impl Parser<char, Self, Error = super::parsable::ParserError>
     where
         Self: Sized,
@@ -166,7 +165,7 @@ impl Expression {
 }
 
 impl Parsable for Expression {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {

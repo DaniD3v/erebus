@@ -1,5 +1,4 @@
 use chumsky::{
-    error::Simple,
     prelude::choice,
     text::{whitespace, TextParser},
     Parser,
@@ -14,10 +13,9 @@ use crate::parser::{
 use super::{
     expr::{CodeScope, Expression},
     ident::{IdentWithOptionalType, Type},
-    parsable::Parsable,
-    syntax_elements::FnKeyword,
+    parsable::{Parsable, ParserError},
     syntax_elements::{
-        AssignmentOp, DelimiterOp, LParen, LetKeyword, MutModifier, PubModifier, RParen,
+        AssignmentOp, DelimiterOp, FnKeyword, LParen, LetKeyword, MutModifier, PubModifier, RParen,
         ReturnTypeOp, Semicolon,
     },
 };
@@ -29,7 +27,7 @@ pub struct MaybePublic<T> {
 }
 
 impl<T: Parsable> Parsable for MaybePublic<T> {
-    fn parser() -> impl Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -52,7 +50,7 @@ pub struct Let {
 }
 
 impl Parsable for Let {
-    fn parser() -> impl chumsky::Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+    fn parser() -> impl chumsky::Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -113,7 +111,7 @@ pub struct FnDef {
 }
 
 impl Parsable for FnDef {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -170,7 +168,7 @@ pub enum RawTopLevelStatement {
 }
 
 impl Parsable for RawTopLevelStatement {
-    fn parser() -> impl Parser<char, Self, Error = chumsky::prelude::Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
@@ -188,7 +186,7 @@ pub enum Statement {
 }
 
 impl Parsable for Statement {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {

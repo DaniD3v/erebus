@@ -1,17 +1,16 @@
 use chumsky::{
-    error::Simple,
     prelude::{choice, just},
     text::newline,
     Parser,
 };
 
-use crate::parser::parsable::Parsable;
+use crate::parser::parsable::{Parsable, ParserError};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct StringLit(pub String);
 
 impl Parsable for StringLit {
-    fn parser() -> impl Parser<char, Self, Error = Simple<char>>
+    fn parser() -> impl Parser<char, Self, Error = ParserError>
     where
         Self: Sized,
     {
