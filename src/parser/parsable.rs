@@ -18,7 +18,6 @@ pub type ParserInput<'src> = &'src str;
 pub trait Parsable: Sized {
     fn parser<'src>() -> impl ParsableParser<'src, Self>;
 
-    #[cfg(test)]
     fn parse(input: ParserInput) -> chumsky::ParseResult<Self, ParserError> {
         Self::parser().parse(input)
     }
