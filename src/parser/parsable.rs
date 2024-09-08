@@ -1,18 +1,30 @@
-use chumsky::{error::Simple, Parser};
+use chumsky::{error::Rich, extra, input::Input, Parser as ChumskyParser};
 
-pub type ParserError = Simple<char>;
-
-pub trait Parsable
-where
-    Self: Sized,
+pub trait ParsableParser<'src, SELF: Sized>:
+    ChumskyParser<'src, ParserInput<'src>, SELF, extra::Err<ParserError<'src>>> + Clone
 {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>;
+}
+impl<
+        'src,
+        T: ChumskyParser<'src, ParserInput<'src>, SELF, extra::Err<ParserError<'src>>> + Clone,
+        SELF: Sized,
+    > ParsableParser<'src, SELF> for T
+{
+}
+
+pub type ParserError<'src> = Rich<'src, <ParserInput<'src> as Input<'src>>::Token>;
+pub type ParserInput<'src> = &'src str;
+
+pub trait Parsable: Sized {
+    fn parser<'src>() -> impl ParsableParser<'src, Self>;
 
     #[cfg(test)]
-    fn from_str(str: &str) -> Self
-    where
-        Self: Sized,
-    {
-        Self::parser().parse(str).unwrap()
+    fn parse(input: ParserInput) -> chumsky::ParseResult<Self, ParserError> {
+        Self::parser().parse(input)
+    }
+
+    #[cfg(test)]
+    fn is_err(input: ParserInput) -> bool {
+        Self::parse(input).has_errors()
     }
 }

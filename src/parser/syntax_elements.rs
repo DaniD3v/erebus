@@ -1,13 +1,8 @@
-use chumsky::{
-    prelude::just,
-    text::{keyword, TextParser},
-    Parser,
-};
+use chumsky::{prelude::just, text::keyword, Parser};
 
 use super::{
     bin_ops::{GenericBinOp, HasPrecedence, Precedence},
-    parsable::Parsable,
-    ParserError,
+    parsable::{Parsable, ParsableParser},
 };
 
 macro_rules! generate_parsable {
@@ -16,10 +11,7 @@ macro_rules! generate_parsable {
         pub struct $ident;
 
         impl Parsable for $ident {
-            fn parser() -> impl chumsky::Parser<char, Self, Error = ParserError>
-            where
-                Self: Sized,
-            {
+            fn parser<'src>() -> impl ParsableParser<'src, Self> {
                 $impl
             }
         }
@@ -28,7 +20,7 @@ macro_rules! generate_parsable {
 
 macro_rules! generate_keyword_parsable {
     ($ident:ident, $str_repr:literal) => {
-        generate_parsable! {$ident, keyword($str_repr).map(|()| Self {})}
+        generate_parsable! {$ident, keyword($str_repr).map(|_| Self {})}
     };
 }
 

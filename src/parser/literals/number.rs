@@ -1,11 +1,10 @@
 use chumsky::{
-    error::Simple,
     prelude::{choice, just},
     text, Parser,
 };
 
 use crate::parser::{
-    parsable::{Parsable, ParserError},
+    parsable::{Parsable, ParsableParser, ParserError},
     syntax_elements::DotOp,
 };
 
@@ -40,9 +39,9 @@ fn test_based_float_literal_to_value() {
 pub struct NumLit(pub f64);
 
 impl NumLit {
-    fn raw_base_parser<const BASE: u32>(
+    fn raw_base_parser<'src, const BASE: u32>(
         symbol: &'static str,
-    ) -> impl Parser<char, Self, Error = ParserError> {
+    ) -> impl ParsableParser<'src, Self> {
         just(symbol)
             .ignored()
             // ignore leading zeros
@@ -52,25 +51,22 @@ impl NumLit {
             .try_map(|((_, int), fractional), span| {
                 if fractional.is_some() && BASE > 10 {
                     // 0x0.dead_beef() is ambiguous
-                    return Err(Simple::custom(
+                    return Err(ParserError::custom(
                         span,
                         "float literals for bases greater than 10 are not supported.",
                     ));
                 }
 
                 // the fractional string doesn't exist -> ""
-                let fractional = fractional.unwrap_or(((), "".to_string())).1;
+                let fractional = fractional.unwrap_or(((), "")).1;
 
-                Ok(Self(based_float_literal_to_value(BASE, &int, &fractional)))
+                Ok(Self(based_float_literal_to_value(BASE, int, fractional)))
             })
     }
 }
 
 impl Parsable for NumLit {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         choice((
             Self::raw_base_parser::<16>("0x"),
             Self::raw_base_parser::<2>("0b"),
@@ -82,16 +78,16 @@ impl Parsable for NumLit {
 
 #[test]
 fn test_num_literal() {
-    let parse = |str| NumLit::parser().parse(str);
+    assert_eq!(NumLit::parse("1234.4321").unwrap(), NumLit(1234.4321));
+    assert_eq!(NumLit::parse("000743.6400").unwrap(), NumLit(743.64));
 
-    assert_eq!(parse("1234.4321").unwrap(), NumLit(1234.4321));
-    assert_eq!(parse("00743.6400").unwrap(), NumLit(743.64));
+    assert_eq!(NumLit::parse("0xFF3B").unwrap(), NumLit(0xFF3B as f64));
+    assert_eq!(
+        NumLit::parse("0b101011.0").unwrap(),
+        NumLit(0b101011 as f64)
+    );
 
-    assert_eq!(parse("0b101011.0").unwrap(), NumLit(0b101011 as f64));
-    assert_eq!(parse("0xFF3B").unwrap(), NumLit(0xFF3B as f64));
-    assert!(parse("0x123.FF").is_err());
-
-    // this looks bad but is fine when parsed as a statement
-    assert_eq!(parse("0b1013").unwrap(), NumLit(0b101 as f64));
-    assert_eq!(parse("0b101.103").unwrap(), NumLit(0b101 as f64 + (0.5)));
+    assert!(NumLit::is_err("0x123.FF"));
+    assert!(NumLit::is_err("0b1013"));
+    assert!(NumLit::is_err("0b101.103"));
 }

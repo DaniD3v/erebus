@@ -14,7 +14,7 @@ fn main() {
     let input_content = fs::read_to_string(&args.input_file)
         .unwrap_or_else(|_| panic!("failed to read {:#?}", &args.input_file));
 
-    let ast = parser().parse(input_content).unwrap();
+    let ast = parser().parse(&input_content).unwrap();
 
     if matches!(args.emit, Emit::Ast) {
         println!("Ast: {:#?}", ast)

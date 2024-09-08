@@ -1,13 +1,10 @@
 use std::marker::PhantomData;
 
-use chumsky::{
-    prelude::{choice, empty},
-    Parser,
-};
+use chumsky::{prelude::choice, IterParser, Parser};
 
 use super::{
     expr::Expression,
-    parsable::{Parsable, ParserError},
+    parsable::{Parsable, ParsableParser},
     syntax_elements::{AddExpr, DivExpr, EqualsExpr, MulExpr, SubExpr},
 };
 
@@ -38,14 +35,15 @@ impl<OP: Parsable + HasPrecedence> GenericBinOp<OP> {
         }
     }
 
-    fn maybe_parser_with_precedence(
+    fn maybe_parser_with_precedence<'src>(
         current_precedence: Precedence,
-    ) -> Option<impl Parser<char, Self, Error = ParserError>> {
+    ) -> Option<impl ParsableParser<'src, Self>> {
         if OP::PRECEDENCE > current_precedence {
             Some(
                 Expression::parser_with_precedence(OP::PRECEDENCE)
                     .separated_by(OP::parser())
                     .at_least(2)
+                    .collect()
                     .map(Self::new),
             )
         } else {
@@ -72,9 +70,9 @@ macro_rules! opt_parser_into_bin_expr_parser {
 }
 
 impl BinExpr {
-    pub fn parser_with_precedence(
+    pub fn parser_with_precedence<'src>(
         current_precedence: Precedence,
-    ) -> impl Parser<char, Self, Error = ParserError> {
+    ) -> impl ParsableParser<'src, Self> {
         let parsers: Vec<_> = [
             // The operators with the lowest precedence need to be parsed first
             // Precedence: 1
@@ -90,18 +88,12 @@ impl BinExpr {
         .flatten()
         .collect();
 
-        if !parsers.is_empty() {
-            choice(parsers).boxed()
-        } else {
-            // TODO chumsky bug: `https://github.com/zesterer/chumsky/issues/668`
-            // this is an ugly workaround
-            empty::<ParserError>().not().map(|_| unreachable!()).boxed()
-        }
+        choice(parsers).boxed()
     }
 }
 
 impl Parsable for BinExpr {
-    fn parser() -> impl Parser<char, Self, Error = ParserError> {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Self::parser_with_precedence(Precedence::MIN)
     }
 }
@@ -109,17 +101,16 @@ impl Parsable for BinExpr {
 #[test]
 fn test_bin_expr() {
     use crate::parser::literals::NumLit;
-    let parse = |str| BinExpr::parser().parse(str);
 
     assert_eq!(
-        parse("1 + 1").unwrap(),
+        BinExpr::parse("1 + 1").unwrap(),
         BinExpr::Add(AddExpr::new(vec![
             Expression::NumLit(NumLit(1_f64)),
             Expression::NumLit(NumLit(1_f64))
         ]))
     );
     assert_eq!(
-        parse("1 + 1 * 1").unwrap(),
+        BinExpr::parse("1 + 1 * 1").unwrap(),
         BinExpr::Add(AddExpr::new(vec![
             Expression::NumLit(NumLit(1_f64)),
             Expression::BinExpr(Box::new(BinExpr::Mul(MulExpr::new(vec![
@@ -129,7 +120,7 @@ fn test_bin_expr() {
         ]))
     );
     assert_eq!(
-        parse("1 * 1 + 1 * 1 + 1 == 2").unwrap(),
+        BinExpr::parse("1 * 1 + 1 * 1 + 1 == 2").unwrap(),
         BinExpr::Equals(EqualsExpr::new(vec![
             Expression::BinExpr(Box::new(BinExpr::Add(AddExpr::new(vec![
                 Expression::BinExpr(Box::new(BinExpr::Mul(MulExpr::new(vec![

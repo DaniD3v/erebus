@@ -1,6 +1,6 @@
 use chumsky::{
     prelude::{choice, recursive},
-    Parser,
+    IterParser, Parser,
 };
 
 use crate::parser::{
@@ -10,7 +10,7 @@ use crate::parser::{
 
 use super::{
     bin_ops::{BinExpr, Precedence},
-    parsable::{Parsable, ParserError},
+    parsable::{Parsable, ParsableParser},
     statement::Statement,
     syntax_elements::{DelimiterOp, LCurly, LParen, RCurly, RParen},
 };
@@ -23,10 +23,7 @@ pub struct CodeScope {
 }
 
 impl Parsable for CodeScope {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         LCurly::parser()
             .ignore_then(Statement::parser().repeated().collect())
             .then(Expression::parser())
@@ -38,10 +35,9 @@ impl Parsable for CodeScope {
 #[test]
 fn test_scope() {
     use crate::parser::statement::Let;
-    let parse = |str| CodeScope::parser().parse(str);
 
     assert_eq!(
-        parse("{ 1 }").unwrap(),
+        CodeScope::parse("{ 1 }").unwrap(),
         CodeScope {
             statements: Vec::new(),
             expr: Expression::NumLit(NumLit(1_f64))
@@ -49,7 +45,7 @@ fn test_scope() {
     );
 
     assert_eq!(
-        parse(
+        CodeScope::parse(
             "{\
               let mut test = \"Statement\";
              \"TestStatement\"\
@@ -75,32 +71,31 @@ pub struct FnCall {
 }
 
 impl FnCall {
-    fn parser_with(
-        existing_parser: impl Parser<char, Expression, Error = ParserError>,
-    ) -> impl Parser<char, Self, Error = super::parsable::ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser_with<'src>(
+        existing_parser: impl ParsableParser<'src, Expression>,
+    ) -> impl ParsableParser<'src, Self> {
         Ident::parser()
             .then_ignore(LParen::parser())
-            .then(existing_parser.separated_by(DelimiterOp::parser()))
+            .then(
+                existing_parser
+                    .separated_by(DelimiterOp::parser())
+                    .collect(),
+            )
             .then_ignore(RParen::parser())
             .map(|(fn_name, args)| Self { fn_name, args })
     }
 }
 
 impl Parsable for FnCall {
-    fn parser() -> impl Parser<char, Self, Error = super::parsable::ParserError> {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Self::parser_with(Expression::parser())
     }
 }
 
 #[test]
 fn test_fn_call() {
-    let parse = |str| FnCall::parser().parse(str);
-
     assert_eq!(
-        parse("simple_test(123)").unwrap(),
+        FnCall::parse("simple_test(123)").unwrap(),
         FnCall {
             fn_name: Ident::from_str("simple_test"),
             args: vec![Expression::NumLit(NumLit(123_f64))]
@@ -112,20 +107,18 @@ fn test_fn_call() {
 pub struct Variable(pub Ident);
 
 impl Parsable for Variable {
-    fn parser() -> impl Parser<char, Self, Error = ParserError> {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Ident::parser().map(Self)
     }
 }
 
 #[test]
 fn test_variable() {
-    let parse = |str| Variable::parser().parse(str);
-
     assert_eq!(
-        parse("var_name").unwrap(),
+        Variable::parse("var_name").unwrap(),
         Variable(Ident::from_str("var_name"))
     );
-    assert!(parse("1test").is_err())
+    assert!(Variable::is_err("1test"))
 }
 
 /// An expression that has a value/can return something
@@ -143,9 +136,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn parser_with_precedence(
-        precedence: Precedence,
-    ) -> impl Parser<char, Self, Error = ParserError> {
+    pub fn parser_with_precedence<'src>(precedence: Precedence) -> impl ParsableParser<'src, Self> {
         recursive(|expr| {
             choice((
                 // The longest possible expression needs to be parsed first.
@@ -165,10 +156,7 @@ impl Expression {
 }
 
 impl Parsable for Expression {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Self::parser_with_precedence(Precedence::MIN)
     }
 }

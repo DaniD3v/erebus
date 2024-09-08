@@ -6,12 +6,12 @@ mod parsable;
 mod statement;
 mod syntax_elements;
 
-use chumsky::{prelude::end, Parser};
-use parsable::ParserError;
+use chumsky::{IterParser, Parser};
+use parsable::ParsableParser;
 use statement::TopLevelStatement;
 
 pub use parsable::Parsable;
 
-pub fn parser() -> impl Parser<char, Vec<TopLevelStatement>, Error = ParserError> {
-    TopLevelStatement::parser().repeated().then_ignore(end())
+pub fn parser<'src>() -> impl ParsableParser<'src, Vec<TopLevelStatement>> {
+    TopLevelStatement::parser().repeated().collect()
 }

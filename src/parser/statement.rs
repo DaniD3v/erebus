@@ -1,8 +1,4 @@
-use chumsky::{
-    prelude::choice,
-    text::{whitespace, TextParser},
-    Parser,
-};
+use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
 
 #[allow(unused_imports)]
 use crate::parser::{
@@ -13,7 +9,7 @@ use crate::parser::{
 use super::{
     expr::{CodeScope, Expression},
     ident::{IdentWithOptionalType, Type},
-    parsable::{Parsable, ParserError},
+    parsable::{Parsable, ParsableParser},
     syntax_elements::{
         AssignmentOp, DelimiterOp, FnKeyword, LParen, LetKeyword, MutModifier, PubModifier, RParen,
         ReturnTypeOp, Semicolon,
@@ -27,10 +23,7 @@ pub struct MaybePublic<T> {
 }
 
 impl<T: Parsable> Parsable for MaybePublic<T> {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         PubModifier::parser()
             .or_not()
             .then(T::parser())
@@ -50,10 +43,7 @@ pub struct Let {
 }
 
 impl Parsable for Let {
-    fn parser() -> impl chumsky::Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         LetKeyword::parser()
             .then(MutModifier::parser().padded().or_not())
             .then(IdentWithOptionalType::parser().padded())
@@ -70,10 +60,8 @@ impl Parsable for Let {
 
 #[test]
 fn test_let() {
-    let parse = |str| Let::parser().parse(str);
-
     assert_eq!(
-        parse("let _test = 123").unwrap(),
+        Let::parse("let _test = 123").unwrap(),
         Let {
             is_mut: false,
 
@@ -82,7 +70,7 @@ fn test_let() {
         }
     );
     assert_eq!(
-        parse("let mut o:String=\"helloTest\"").unwrap(),
+        Let::parse("let mut o:String=\"helloTest\"").unwrap(),
         Let {
             is_mut: true,
 
@@ -95,10 +83,9 @@ fn test_let() {
         }
     );
 
-    assert!(parse("letmut a = 321").is_err());
-    assert!(parse("let mut 1 = 321").is_err());
-
-    assert!(parse("let mut a == 321").is_err(),);
+    assert!(Let::is_err("letmut a = 321"));
+    assert!(Let::is_err("let mut 1 = 321"));
+    assert!(Let::is_err("let mut a == 321"));
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,16 +98,17 @@ pub struct FnDef {
 }
 
 impl Parsable for FnDef {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         FnKeyword::parser()
             .ignored()
             .then_ignore(whitespace())
             .ignore_then(Ident::parser())
             .then_ignore(LParen::parser())
-            .then(IdentWithType::parser().separated_by(DelimiterOp::parser()))
+            .then(
+                IdentWithType::parser()
+                    .separated_by(DelimiterOp::parser())
+                    .collect(),
+            )
             .then_ignore(RParen::parser())
             .then_ignore(ReturnTypeOp::parser().padded())
             .then(Type::parser())
@@ -137,10 +125,8 @@ impl Parsable for FnDef {
 
 #[test]
 fn test_fn() {
-    let parse = |str| FnDef::parser().parse(str);
-
     assert_eq!(
-        parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
+        FnDef::parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
         FnDef {
             name: Ident::from_str("basic_test_fn"),
             args: vec![IdentWithType {
@@ -168,10 +154,7 @@ pub enum RawTopLevelStatement {
 }
 
 impl Parsable for RawTopLevelStatement {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         choice((
             Let::parser().map(Self::Let),
             FnDef::parser().map(Self::FnDef),
@@ -186,10 +169,7 @@ pub enum Statement {
 }
 
 impl Parsable for Statement {
-    fn parser() -> impl Parser<char, Self, Error = ParserError>
-    where
-        Self: Sized,
-    {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Let::parser()
             .then_ignore(Semicolon::parser())
             .map(Self::Let)
@@ -198,10 +178,8 @@ impl Parsable for Statement {
 
 #[test]
 fn test_statement() {
-    let parse = |str| Statement::parser().parse(str);
-
     assert_eq!(
-        parse("let var = \"simple_let\";").unwrap(),
+        Statement::parse("let var = \"simple_let\";").unwrap(),
         Statement::Let(Let {
             is_mut: false,
             left: Ident::from_str("var").into(),
@@ -209,5 +187,5 @@ fn test_statement() {
         })
     );
 
-    assert!(parse("let missing_semicolon = 1").is_err());
+    assert!(Statement::is_err("let missing_semicolon = 1"));
 }
