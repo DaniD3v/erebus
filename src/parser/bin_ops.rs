@@ -1,6 +1,7 @@
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use chumsky::{prelude::choice, IterParser, Parser};
+use chumsky::{prelude::choice, Parser};
 
 use super::{
     expr::Expression,
@@ -17,34 +18,31 @@ pub trait HasPrecedence {
 #[derive(Debug, PartialEq)]
 pub struct GenericBinOp<OP: Parsable + HasPrecedence> {
     op: PhantomData<OP>,
-
-    /// List of Expressions.
-    ///
-    /// The name implies that there can only be 2 Expressions but
-    /// for ease of parsing they are actually stored in a chain.
-    ///
-    /// e.g. 1 + 2 + 3 == vec![NumLiteral(1), NumLiteral(2), NumLiteral(3)]
-    expressions: Vec<Expression>,
+    expressions: [Expression; 2],
 }
 
-impl<OP: Parsable + HasPrecedence> GenericBinOp<OP> {
-    pub fn new(expressions: Vec<Expression>) -> Self {
+impl<OP: Parsable + HasPrecedence + Debug> GenericBinOp<OP> {
+    pub fn new(expressions: [Expression; 2]) -> Self {
         Self {
             op: PhantomData {},
             expressions,
         }
     }
 
-    fn maybe_parser_with_precedence<'src>(
+    fn maybe_parser_with_precedence_and_parser<'src>(
         current_precedence: Precedence,
+        // this parser must be of `current_precedence`
+        expression_parser: impl ParsableParser<'src, Expression>,
     ) -> Option<impl ParsableParser<'src, Self>> {
-        if OP::PRECEDENCE > current_precedence {
+        if OP::PRECEDENCE >= current_precedence {
             Some(
-                Expression::parser_with_precedence(OP::PRECEDENCE)
-                    .separated_by(OP::parser())
-                    .at_least(2)
-                    .collect()
-                    .map(Self::new),
+                // We're not allowed to search for an expression with the same operator to the left.
+                // This prevents infinite recursion.
+                Expression::parser_with_precedence(OP::PRECEDENCE + 1)
+                    .then_ignore(OP::parser())
+                    // It's not possible to cause infinite recursion on the right side.
+                    .then(expression_parser)
+                    .map(|(expression0, expression1)| Self::new([expression0, expression1])),
             )
         } else {
             None
@@ -62,27 +60,36 @@ pub enum BinExpr {
     Div(DivExpr),
 }
 
-macro_rules! opt_parser_into_bin_expr_parser {
-    ($expr_name:ident, $enum_variant:ident, $precedence:ident) => {
-        $expr_name::maybe_parser_with_precedence($precedence)
-            .map(|parser| parser.map(Self::$enum_variant).boxed())
-    };
-}
-
 impl BinExpr {
-    pub fn parser_with_precedence<'src>(
+    pub fn parser_with_precedence_and_parser<'src>(
         current_precedence: Precedence,
+        // this parser must be of `current_precedence`
+        expression_parser: impl ParsableParser<'src, Expression> + 'src,
     ) -> impl ParsableParser<'src, Self> {
+        macro_rules! parse_as_bin_expr {
+            ($expr_name:ident) => {
+                $expr_name::maybe_parser_with_precedence_and_parser(
+                    current_precedence,
+                    expression_parser.clone(),
+                )
+                .map(|parser| {
+                    parser
+                        .map(|expressions| $expr_name::into_bin_expr(expressions))
+                        .boxed()
+                })
+            };
+        }
+
         let parsers: Vec<_> = [
             // The operators with the lowest precedence need to be parsed first
             // Precedence: 1
-            opt_parser_into_bin_expr_parser!(EqualsExpr, Equals, current_precedence),
+            parse_as_bin_expr!(EqualsExpr),
             // Precedence: 2
-            opt_parser_into_bin_expr_parser!(AddExpr, Add, current_precedence),
-            opt_parser_into_bin_expr_parser!(SubExpr, Sub, current_precedence),
+            parse_as_bin_expr!(AddExpr),
+            parse_as_bin_expr!(SubExpr),
             // Precedence: 3
-            opt_parser_into_bin_expr_parser!(MulExpr, Mul, current_precedence),
-            opt_parser_into_bin_expr_parser!(DivExpr, Div, current_precedence),
+            parse_as_bin_expr!(MulExpr),
+            parse_as_bin_expr!(DivExpr),
         ]
         .into_iter()
         .flatten()
@@ -94,7 +101,10 @@ impl BinExpr {
 
 impl Parsable for BinExpr {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        Self::parser_with_precedence(Precedence::MIN)
+        Self::parser_with_precedence_and_parser(
+            Precedence::MIN,
+            Expression::parser_with_precedence(Precedence::MIN),
+        )
     }
 }
 
@@ -104,36 +114,52 @@ fn test_bin_expr() {
 
     assert_eq!(
         BinExpr::parse("1 + 1").unwrap(),
-        BinExpr::Add(AddExpr::new(vec![
+        BinExpr::Add(AddExpr::new([
             Expression::NumLit(NumLit(1_f64)),
             Expression::NumLit(NumLit(1_f64))
         ]))
     );
     assert_eq!(
-        BinExpr::parse("1 + 1 * 1").unwrap(),
-        BinExpr::Add(AddExpr::new(vec![
+        BinExpr::parse("1 + 2 * 3 / 4").unwrap(),
+        BinExpr::Add(AddExpr::new([
             Expression::NumLit(NumLit(1_f64)),
-            Expression::BinExpr(Box::new(BinExpr::Mul(MulExpr::new(vec![
-                Expression::NumLit(NumLit(1_f64)),
-                Expression::NumLit(NumLit(1_f64))
-            ]))))
+            MulExpr::as_expr([
+                Expression::NumLit(NumLit(2_f64)),
+                DivExpr::as_expr([
+                    Expression::NumLit(NumLit(3_f64)),
+                    Expression::NumLit(NumLit(4_f64))
+                ])
+            ])
         ]))
     );
     assert_eq!(
-        BinExpr::parse("1 * 1 + 1 * 1 + 1 == 2").unwrap(),
-        BinExpr::Equals(EqualsExpr::new(vec![
-            Expression::BinExpr(Box::new(BinExpr::Add(AddExpr::new(vec![
-                Expression::BinExpr(Box::new(BinExpr::Mul(MulExpr::new(vec![
-                    Expression::NumLit(NumLit(1_f64)),
-                    Expression::NumLit(NumLit(1_f64)),
-                ])))),
-                Expression::BinExpr(Box::new(BinExpr::Mul(MulExpr::new(vec![
-                    Expression::NumLit(NumLit(1_f64)),
-                    Expression::NumLit(NumLit(1_f64)),
-                ])))),
-                Expression::NumLit(NumLit(1_f64))
-            ])))),
-            Expression::NumLit(NumLit(2_f64))
+        BinExpr::parse("3 + 2 - 1").unwrap(),
+        BinExpr::Add(AddExpr::new([
+            Expression::NumLit(NumLit(3_f64)),
+            SubExpr::as_expr([
+                Expression::NumLit(NumLit(2_f64)),
+                Expression::NumLit(NumLit(1_f64)),
+            ])
         ]))
+    );
+    assert_eq!(
+        // use expression parser to make sure it also works there
+        Expression::parse("1 * 2 + 3 * 4 + 5 == 6").unwrap(),
+        EqualsExpr::as_expr([
+            AddExpr::as_expr([
+                MulExpr::as_expr([
+                    Expression::NumLit(NumLit(1_f64)),
+                    Expression::NumLit(NumLit(2_f64)),
+                ]),
+                AddExpr::as_expr([
+                    MulExpr::as_expr([
+                        Expression::NumLit(NumLit(3_f64)),
+                        Expression::NumLit(NumLit(4_f64)),
+                    ]),
+                    Expression::NumLit(NumLit(5_f64))
+                ])
+            ]),
+            Expression::NumLit(NumLit(6_f64))
+        ])
     );
 }

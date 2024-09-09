@@ -141,7 +141,7 @@ impl Expression {
             choice((
                 // The longest possible expression needs to be parsed first.
                 // Since BinExpr can start with an expression it needs to be first.
-                BinExpr::parser_with_precedence(precedence)
+                BinExpr::parser_with_precedence_and_parser(precedence, expr.clone())
                     .map(|bin_expr| Self::BinExpr(Box::new(bin_expr))),
                 // a `FnCall` needs to be parsed first because they both start
                 // with an Ident but a `FnCall` is longer.

@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
 
 #[allow(unused_imports)]
