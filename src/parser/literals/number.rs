@@ -90,4 +90,9 @@ fn test_num_literal() {
     assert!(NumLit::is_err("0x123.FF"));
     assert!(NumLit::is_err("0b1013"));
     assert!(NumLit::is_err("0b101.103"));
+
+    assert!(NumLit::is_err(" 1.2 "));
+    assert!(NumLit::is_err("1. 2"));
+    assert!(NumLit::is_err("1 .2"));
+    assert!(NumLit::is_err("1 . 2"));
 }
