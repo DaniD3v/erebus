@@ -12,7 +12,7 @@ use super::{
     bin_ops::{BinExpr, Precedence},
     parsable::{Parsable, ParsableParser},
     statement::Statement,
-    syntax_elements::{DelimiterOp, LCurly, LParen, RCurly, RParen},
+    syntax_elements::{Comma, LCurly, LParen, RCurly, RParen},
 };
 
 /// Block of Code. Used in if's, matches, fn bodies, ...
@@ -76,11 +76,7 @@ impl FnCall {
     ) -> impl ParsableParser<'src, Self> {
         Ident::parser()
             .then_ignore(LParen::parser())
-            .then(
-                existing_parser
-                    .separated_by(DelimiterOp::parser())
-                    .collect(),
-            )
+            .then(existing_parser.separated_by(Comma::parser()).collect())
             .then_ignore(RParen::parser())
             .map(|(fn_name, args)| Self { fn_name, args })
     }

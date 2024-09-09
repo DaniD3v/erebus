@@ -13,8 +13,8 @@ use super::{
     ident::{IdentWithOptionalType, Type},
     parsable::{Parsable, ParsableParser},
     syntax_elements::{
-        AssignmentOp, DelimiterOp, FnKeyword, LParen, LetKeyword, MutModifier, PubModifier, RParen,
-        ReturnTypeOp, Semicolon,
+        AssignmentOp, Comma, FnKeyword, LCurly, LParen, LetKeyword, MutModifier, PubModifier,
+        RCurly, RParen, ReturnTypeOp, Semicolon, StructKeyword,
     },
 };
 
@@ -108,7 +108,7 @@ impl Parsable for FnDef {
             .then_ignore(LParen::parser())
             .then(
                 IdentWithType::parser()
-                    .separated_by(DelimiterOp::parser())
+                    .separated_by(Comma::parser())
                     .collect(),
             )
             .then_ignore(RParen::parser())
@@ -145,6 +145,48 @@ fn test_fn() {
     )
 }
 
+#[derive(Debug, PartialEq)]
+pub struct StructDef {
+    name: Ident,
+    fields: Vec<IdentWithType>,
+}
+
+impl Parsable for StructDef {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
+        StructKeyword::parser()
+            .ignore_then(Ident::parser().padded())
+            .then_ignore(LCurly::parser())
+            .then(
+                IdentWithType::parser()
+                    .separated_by(Comma::parser())
+                    .allow_trailing()
+                    .collect(),
+            )
+            .then_ignore(RCurly::parser())
+            .map(|(name, fields)| Self { name, fields })
+    }
+}
+
+#[test]
+fn test_struct_def() {
+    assert_eq!(
+        StructDef::parse("struct SimpleTest { a: int, b: String, }").unwrap(),
+        StructDef {
+            name: Ident::from_str("SimpleTest"),
+            fields: vec![
+                IdentWithType {
+                    ident: Ident::from_str("a"),
+                    r#type: Type::from_str("int"),
+                },
+                IdentWithType {
+                    ident: Ident::from_str("b"),
+                    r#type: Type::from_str("String")
+                }
+            ]
+        }
+    )
+}
+
 // TODO test
 pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 
@@ -153,6 +195,7 @@ pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 pub enum RawTopLevelStatement {
     Let(Let),
     FnDef(FnDef),
+    StructDef(StructDef),
 }
 
 impl Parsable for RawTopLevelStatement {
@@ -160,6 +203,7 @@ impl Parsable for RawTopLevelStatement {
         choice((
             Let::parser().map(Self::Let),
             FnDef::parser().map(Self::FnDef),
+            StructDef::parser().map(Self::StructDef),
         ))
         .padded()
     }

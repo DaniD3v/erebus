@@ -59,11 +59,11 @@ macro_rules! generate_binary_operator_parsable {
 }
 
 generate_operator_parsable! {MacroCallOp, '!'}
-generate_operator_parsable! {DotOp, '.'}
-
 generate_operator_parsable! {AssignmentOp, '=', padded}
 generate_operator_parsable! {ReturnTypeOp, "->", padded}
-generate_operator_parsable! {DelimiterOp, ',', padded}
+
+generate_operator_parsable! {Dot, '.'}
+generate_operator_parsable! {Comma, ',', padded}
 generate_operator_parsable! {Semicolon, ';', padded}
 
 // Precedence needs to start at 1, because 0 can parse all Expressions.
@@ -82,4 +82,5 @@ generate_keyword_parsable! {MutModifier, "mut"}
 generate_keyword_parsable! {PubModifier, "pub"}
 
 generate_keyword_parsable! {LetKeyword, "let"}
+generate_keyword_parsable! {StructKeyword, "struct"}
 generate_keyword_parsable! {FnKeyword, "fn"}

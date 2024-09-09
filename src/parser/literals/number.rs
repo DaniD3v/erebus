@@ -5,7 +5,7 @@ use chumsky::{
 
 use crate::parser::{
     parsable::{Parsable, ParsableParser, ParserError},
-    syntax_elements::DotOp,
+    syntax_elements::Dot,
 };
 
 fn based_float_literal_to_value(base: u32, int: &str, fractional: &str) -> f64 {
@@ -39,6 +39,14 @@ fn test_based_float_literal_to_value() {
 pub struct NumLit(pub f64);
 
 impl NumLit {
+    // // TODO this can be substitued with text::int once it's not be padded anymore. TODO gh issue.
+    // /// Parses a number of the given `BASE` without a decimal point, or interpreting the String value.
+    // fn raw_number_parser<'src, const BASE: u32>() -> impl ParsableParser<'src, String> {
+    //     any()
+    //         // use try_map over filter to get a better error on failure
+    //         .filter(|c| )
+    // }
+
     fn raw_base_parser<'src, const BASE: u32>(
         symbol: &'static str,
     ) -> impl ParsableParser<'src, Self> {
@@ -47,7 +55,7 @@ impl NumLit {
             // ignore leading zeros
             .then_ignore(just('0').repeated())
             .then(text::int(BASE))
-            .then(DotOp::parser().ignored().then(text::int(BASE)).or_not())
+            .then(Dot::parser().ignored().then(text::int(BASE)).or_not())
             .try_map(|((_, int), fractional), span| {
                 if fractional.is_some() && BASE > 10 {
                     // 0x0.dead_beef() is ambiguous
