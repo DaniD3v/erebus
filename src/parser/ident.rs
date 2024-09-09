@@ -62,7 +62,7 @@ impl Parsable for IdentWithType {
 }
 
 #[test]
-fn test_identifier_with_type() {
+fn test_ident_with_type() {
     assert_eq!(
         IdentWithType::parse("test: String").unwrap(),
         IdentWithType {
