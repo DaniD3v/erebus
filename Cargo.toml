@@ -1,5 +1,7 @@
 [package]
-name = "greybolt"
+name = "erebus"
+description = "Easily transpile into a bad interpreted language of your choice."
+
 version = "0.1.0"
 edition = "2021"
 
