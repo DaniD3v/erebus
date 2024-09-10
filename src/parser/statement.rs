@@ -201,7 +201,9 @@ pub enum RawTopLevelStatement {
 impl Parsable for RawTopLevelStatement {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
         choice((
-            Let::parser().map(Self::Let),
+            Let::parser()
+                .then_ignore(Semicolon::parser())
+                .map(Self::Let),
             FnDef::parser().map(Self::FnDef),
             StructDef::parser().map(Self::StructDef),
         ))
@@ -209,6 +211,9 @@ impl Parsable for RawTopLevelStatement {
     }
 }
 
+/// Something that cannot return a value.
+///
+/// Always delimited with a semicolon.
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Let(Let),
