@@ -3,7 +3,7 @@ use chumsky::{
     text, Parser,
 };
 
-use crate::parser::{
+use crate::{
     parsable::{Parsable, ParsableParser, ParserError},
     syntax_elements::Dot,
 };

@@ -3,7 +3,7 @@ use chumsky::{
     IterParser, Parser,
 };
 
-use crate::parser::{
+use crate::{
     ident::Ident,
     literals::{NumLit, StringLit},
 };
@@ -34,7 +34,7 @@ impl Parsable for CodeScope {
 
 #[test]
 fn test_scope() {
-    use crate::parser::statement::Let;
+    use crate::statement::Let;
 
     assert_eq!(
         CodeScope::parse("{ 1 }").unwrap(),

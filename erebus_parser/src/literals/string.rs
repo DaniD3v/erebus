@@ -4,7 +4,7 @@ use chumsky::{
     IterParser, Parser,
 };
 
-use crate::parser::parsable::{Parsable, ParsableParser};
+use crate::parsable::{Parsable, ParsableParser};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct StringLit(pub String);

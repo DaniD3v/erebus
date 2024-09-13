@@ -110,7 +110,7 @@ impl Parsable for BinExpr {
 
 #[test]
 fn test_bin_expr() {
-    use crate::parser::literals::NumLit;
+    use crate::literals::NumLit;
 
     assert_eq!(
         BinExpr::parse("1 + 1").unwrap(),

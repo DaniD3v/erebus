@@ -4,10 +4,9 @@ use ariadne::{sources, Color, Label, Report, ReportKind};
 use clap::Parser as ClapParser;
 
 use args::{Args, Emit};
-use parser::{Ast, Parsable};
+use erebus_parser::{Ast, Parsable};
 
 mod args;
-mod parser;
 
 fn failed_compiling(input_file: &Path, error_amount: usize) -> ! {
     assert!(error_amount > 0);

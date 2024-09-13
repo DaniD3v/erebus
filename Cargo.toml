@@ -5,8 +5,12 @@ description = "Easily transpile into a bad interpreted language of your choice."
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-chumsky = "=1.0.0-alpha.7"
-ariadne = "0.4.1"
+[workspace]
+members = ["erebus_parser"]
+default-members = ["erebus_parser"]
 
+[dependencies]
+erebus_parser = { path = "./erebus_parser" }
+
+ariadne = "0.4.1"
 clap = { version = "4.5.17", features = ["derive"] }

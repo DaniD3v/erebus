@@ -2,11 +2,7 @@ use std::fmt::Debug;
 
 use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
 
-#[allow(unused_imports)]
-use crate::parser::{
-    ident::{Ident, IdentWithType},
-    literals::{NumLit, StringLit},
-};
+use crate::ident::{Ident, IdentWithType};
 
 use super::{
     expr::{CodeScope, Expression},
@@ -63,6 +59,8 @@ impl Parsable for Let {
 
 #[test]
 fn test_let() {
+    use crate::literals::{NumLit, StringLit};
+
     assert_eq!(
         Let::parse("let _test = 123").unwrap(),
         Let {
@@ -130,6 +128,8 @@ impl Parsable for FnDef {
 
 #[test]
 fn test_fn() {
+    use crate::literals::StringLit;
+
     assert_eq!(
         FnDef::parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
         FnDef {
@@ -233,6 +233,8 @@ impl Parsable for Statement {
 
 #[test]
 fn test_statement() {
+    use crate::literals::StringLit;
+
     assert_eq!(
         Statement::parse("let var = \"simple_let\";").unwrap(),
         Statement::Let(Let {
