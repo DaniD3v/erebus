@@ -27,3 +27,9 @@ pub trait Parsable: Sized {
         Self::parse(input).has_errors()
     }
 }
+
+impl<T: Parsable> Parsable for Box<T> {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
+        T::parser().map(|e| Box::new(e))
+    }
+}

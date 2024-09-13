@@ -4,10 +4,10 @@ use chumsky::{
     IterParser, Parser,
 };
 
-use super::parsable::{Parsable, ParsableParser};
-
-// Alias for readability.
-pub type Type = Ident;
+use super::{
+    parsable::{Parsable, ParsableParser},
+    r#type::TypeLiteral,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Ident(String);
@@ -45,19 +45,27 @@ fn test_ident() {
     assert!(Ident::is_err(" starts_space123"));
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct IdentWithType {
     pub ident: Ident,
-    pub r#type: Type,
+    pub r#type: TypeLiteral,
+}
+
+impl IdentWithType {
+    pub fn parser_with<'src>(
+        existing_parser: impl ParsableParser<'src, TypeLiteral>,
+    ) -> impl ParsableParser<'src, Self> {
+        Ident::parser()
+            .then_ignore(just(":"))
+            .padded()
+            .then(existing_parser)
+            .map(|(ident, r#type)| Self { ident, r#type })
+    }
 }
 
 impl Parsable for IdentWithType {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        Ident::parser()
-            .then_ignore(just(":"))
-            .padded()
-            .then(Type::parser())
-            .map(|(ident, r#type)| Self { ident, r#type })
+        Self::parser_with(TypeLiteral::parser())
     }
 }
 
@@ -67,23 +75,23 @@ fn test_ident_with_type() {
         IdentWithType::parse("test: String").unwrap(),
         IdentWithType {
             ident: Ident::from_str("test"),
-            r#type: Ident::from_str("String"),
+            r#type: TypeLiteral::Ident(Ident::from_str("String")),
         }
     );
     assert_eq!(
         IdentWithType::parse("test2: \n_String").unwrap(),
         IdentWithType {
             ident: Ident::from_str("test2"),
-            r#type: Ident::from_str("_String"),
+            r#type: TypeLiteral::Ident(Ident::from_str("_String")),
         }
     );
     assert!(IdentWithType::is_err("test3 : String"))
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct IdentWithOptionalType {
     pub ident: Ident,
-    pub r#type: Option<Ident>,
+    pub r#type: Option<TypeLiteral>,
 }
 
 impl From<Ident> for IdentWithOptionalType {
@@ -126,7 +134,7 @@ fn test_ident_with_optional_type() {
         IdentWithOptionalType::parse("str: \n\tString").unwrap(),
         IdentWithOptionalType {
             ident: Ident::from_str("str"),
-            r#type: Some(Ident::from_str("String"))
+            r#type: Some(TypeLiteral::Ident(Ident::from_str("String")))
         }
     )
 }

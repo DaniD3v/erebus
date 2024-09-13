@@ -10,8 +10,9 @@ use crate::parser::{
 
 use super::{
     expr::{CodeScope, Expression},
-    ident::{IdentWithOptionalType, Type},
+    ident::IdentWithOptionalType,
     parsable::{Parsable, ParsableParser},
+    r#type::TypeLiteral,
     syntax_elements::{
         AssignmentOp, Comma, FnKeyword, LCurly, LParen, LetKeyword, MutModifier, PubModifier,
         RCurly, RParen, ReturnTypeOp, Semicolon, StructKeyword,
@@ -78,7 +79,7 @@ fn test_let() {
 
             left: IdentWithType {
                 ident: Ident::from_str("o"),
-                r#type: Ident::from_str("String"),
+                r#type: TypeLiteral::Ident(Ident::from_str("String")),
             }
             .into(),
             right: Expression::StringLit(StringLit("helloTest".to_string())),
@@ -93,9 +94,10 @@ fn test_let() {
 #[derive(Debug, PartialEq)]
 pub struct FnDef {
     name: Ident,
-    args: Vec<IdentWithType>,
 
-    return_type: Type,
+    params: Vec<IdentWithType>,
+    return_type: TypeLiteral,
+
     body: CodeScope,
 }
 
@@ -113,13 +115,14 @@ impl Parsable for FnDef {
             )
             .then_ignore(RParen::parser())
             .then_ignore(ReturnTypeOp::parser().padded())
-            .then(Type::parser())
+            .then(TypeLiteral::parser())
             .then(CodeScope::parser())
-            .map(|(((name, args), return_type), body)| Self {
+            .map(|(((name, params), return_type), body)| Self {
                 name,
-                args,
 
+                params,
                 return_type,
+
                 body,
             })
     }
@@ -131,12 +134,13 @@ fn test_fn() {
         FnDef::parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
         FnDef {
             name: Ident::from_str("basic_test_fn"),
-            args: vec![IdentWithType {
-                ident: Ident::from_str("arg1"),
-                r#type: Type::from_str("int"),
-            }],
 
-            return_type: Type::from_str("String"),
+            params: vec![IdentWithType {
+                ident: Ident::from_str("arg1"),
+                r#type: TypeLiteral::Ident(Ident::from_str("int")),
+            }],
+            return_type: TypeLiteral::Ident(Ident::from_str("String")),
+
             body: CodeScope {
                 statements: Vec::new(),
                 expr: Expression::StringLit(StringLit("test".to_owned()))
@@ -176,11 +180,11 @@ fn test_struct_def() {
             fields: vec![
                 IdentWithType {
                     ident: Ident::from_str("a"),
-                    r#type: Type::from_str("int"),
+                    r#type: TypeLiteral::Ident(Ident::from_str("int")),
                 },
                 IdentWithType {
                     ident: Ident::from_str("b"),
-                    r#type: Type::from_str("String")
+                    r#type: TypeLiteral::Ident(Ident::from_str("String")),
                 }
             ]
         }
