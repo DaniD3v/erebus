@@ -10,7 +10,7 @@ use super::{
     Parsable,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FnSignatureType {
     params: Vec<TypeLiteral>,
     return_type: TypeLiteral,
@@ -48,7 +48,7 @@ fn test_fn_signature_type() {
     )
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct TupleType(pub Vec<TypeLiteral>);
 
 impl TupleType {
@@ -88,7 +88,7 @@ impl Parsable for TupleType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TypeLiteral {
     /// Either refers to a struct or to a generic parameter
     Ident(Ident),
