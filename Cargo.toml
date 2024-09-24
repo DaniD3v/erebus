@@ -5,15 +5,18 @@ description = "Easily transpile into a bad interpreted language of your choice."
 version.workspace = true
 edition.workspace = true
 
+[workspace]
+members = ["erebus_parser"]
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["erebus_parser"]
+[workspace.dependencies]
+enum_dispatch = "0.3.13"
 
 [dependencies]
 erebus_parser = { path = "./erebus_parser" }
 
-ariadne = "0.4.1"
 clap = { version = "4.5.17", features = ["derive"] }
+ariadne = "0.4.1"

@@ -2,6 +2,7 @@ use chumsky::{
     prelude::{choice, recursive},
     IterParser, Parser,
 };
+use enum_dispatch::enum_dispatch;
 
 use crate::{
     ident::Ident,
@@ -118,16 +119,17 @@ fn test_variable() {
 }
 
 /// An expression that has a value/can return something
-#[derive(Debug, PartialEq)]
+#[enum_dispatch]
 #[non_exhaustive]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     BinExpr(Box<BinExpr>),
 
-    FnCall(FnCall),
-    Variable(Variable),
+    FnCall,
+    Variable,
 
-    NumLit(NumLit),
-    StringLit(StringLit),
+    NumLit,
+    StringLit,
     // TODO add variables
 }
 

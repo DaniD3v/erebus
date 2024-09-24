@@ -6,3 +6,5 @@ edition.workspace = true
 
 [dependencies]
 chumsky = "=1.0.0-alpha.7"
+
+enum_dispatch.workspace = true

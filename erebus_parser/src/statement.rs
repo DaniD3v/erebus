@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
+use enum_dispatch::enum_dispatch;
 
 use crate::ident::{Ident, IdentWithType};
 
@@ -195,11 +196,12 @@ fn test_struct_def() {
 pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 
 /// The statements you can put at the outermost scope of each file.
+#[enum_dispatch]
 #[derive(Debug, PartialEq)]
 pub enum RawTopLevelStatement {
-    Let(Let),
-    FnDef(FnDef),
-    StructDef(StructDef),
+    Let,
+    FnDef,
+    StructDef,
 }
 
 impl Parsable for RawTopLevelStatement {
@@ -218,9 +220,10 @@ impl Parsable for RawTopLevelStatement {
 /// Something that cannot return a value.
 ///
 /// Always delimited with a semicolon.
+#[enum_dispatch]
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    Let(Let),
+    Let,
 }
 
 impl Parsable for Statement {
