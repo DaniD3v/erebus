@@ -4,7 +4,7 @@ use ariadne::{sources, Color, Label, Report, ReportKind};
 use clap::Parser as ClapParser;
 
 use args::{Args, Emit};
-use erebus_parser::{Ast, Parsable};
+use erebus_parser::{Parsable, RootModule};
 
 mod args;
 
@@ -26,7 +26,7 @@ fn main() {
     let input_content = fs::read_to_string(&args.input_file)
         .unwrap_or_else(|_| panic!("failed to read {:#?}", &args.input_file));
 
-    let ast = match Ast::parse(&input_content).into_result() {
+    let ast = match RootModule::parse(&input_content).into_result() {
         Ok(ast) => ast,
         Err(errors) => {
             let filename = args.input_file.display().to_string();
