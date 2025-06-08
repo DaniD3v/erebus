@@ -60,15 +60,13 @@ impl Parsable for Let {
 
 #[test]
 fn test_let() {
-    use crate::literals::{NumLit, StringLit};
-
     assert_eq!(
         Let::parse("let _test = 123").unwrap(),
         Let {
             is_mut: false,
 
-            left: Ident::from_str("_test").into(),
-            right: Expression::NumLit(NumLit(123_f64)),
+            left: Ident::test_value("_test").into(),
+            right: Expression::num_lit(123_f64),
         }
     );
     assert_eq!(
@@ -77,11 +75,11 @@ fn test_let() {
             is_mut: true,
 
             left: IdentWithType {
-                ident: Ident::from_str("o"),
-                r#type: TypeLiteral::Ident(Ident::from_str("String")),
+                ident: Ident::test_value("o"),
+                r#type: TypeLiteral::Ident(Ident::test_value("String")),
             }
             .into(),
-            right: Expression::StringLit(StringLit("helloTest".to_string())),
+            right: Expression::string_lit("helloTest"),
         }
     );
 
@@ -129,22 +127,20 @@ impl Parsable for FnDef {
 
 #[test]
 fn test_fn() {
-    use crate::literals::StringLit;
-
     assert_eq!(
         FnDef::parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
         FnDef {
-            name: Ident::from_str("basic_test_fn"),
+            name: Ident::test_value("basic_test_fn"),
 
             params: vec![IdentWithType {
-                ident: Ident::from_str("arg1"),
-                r#type: TypeLiteral::Ident(Ident::from_str("int")),
+                ident: Ident::test_value("arg1"),
+                r#type: TypeLiteral::Ident(Ident::test_value("int")),
             }],
-            return_type: TypeLiteral::Ident(Ident::from_str("String")),
+            return_type: TypeLiteral::Ident(Ident::test_value("String")),
 
             body: CodeScope {
                 statements: Vec::new(),
-                expr: Expression::StringLit(StringLit("test".to_owned()))
+                expr: Expression::string_lit("test")
             }
         }
     )
@@ -177,15 +173,15 @@ fn test_struct_def() {
     assert_eq!(
         StructDef::parse("struct SimpleTest { a: int, b: String, }").unwrap(),
         StructDef {
-            name: Ident::from_str("SimpleTest"),
+            name: Ident::test_value("SimpleTest"),
             fields: vec![
                 IdentWithType {
-                    ident: Ident::from_str("a"),
-                    r#type: TypeLiteral::Ident(Ident::from_str("int")),
+                    ident: Ident::test_value("a"),
+                    r#type: TypeLiteral::Ident(Ident::test_value("int")),
                 },
                 IdentWithType {
-                    ident: Ident::from_str("b"),
-                    r#type: TypeLiteral::Ident(Ident::from_str("String")),
+                    ident: Ident::test_value("b"),
+                    r#type: TypeLiteral::Ident(Ident::test_value("String")),
                 }
             ]
         }
@@ -236,14 +232,12 @@ impl Parsable for Statement {
 
 #[test]
 fn test_statement() {
-    use crate::literals::StringLit;
-
     assert_eq!(
         Statement::parse("let var = \"simple_let\";").unwrap(),
         Statement::Let(Let {
             is_mut: false,
-            left: Ident::from_str("var").into(),
-            right: Expression::StringLit(StringLit("simple_let".to_owned()))
+            left: Ident::test_value("var").into(),
+            right: Expression::string_lit("simple_let")
         })
     );
 

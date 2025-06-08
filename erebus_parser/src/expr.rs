@@ -4,10 +4,7 @@ use chumsky::{
 };
 use enum_dispatch::enum_dispatch;
 
-use crate::{
-    ident::Ident,
-    literals::{NumLit, StringLit},
-};
+use crate::{ident::Ident, literals::Literal};
 
 use super::{
     bin_ops::{BinExpr, Precedence},
@@ -41,7 +38,7 @@ fn test_scope() {
         CodeScope::parse("{ 1 }").unwrap(),
         CodeScope {
             statements: Vec::new(),
-            expr: Expression::NumLit(NumLit(1_f64))
+            expr: Expression::num_lit(1_f64)
         }
     );
 
@@ -57,10 +54,10 @@ fn test_scope() {
             statements: vec![Statement::Let(Let {
                 is_mut: true,
 
-                left: Ident::from_str("test").into(),
-                right: Expression::StringLit(StringLit("Statement".to_owned()))
+                left: Ident::test_value("test").into(),
+                right: Expression::string_lit("Statement")
             })],
-            expr: Expression::StringLit(StringLit("TestStatement".to_owned()))
+            expr: Expression::string_lit("TestStatement")
         }
     );
 }
@@ -94,8 +91,8 @@ fn test_fn_call() {
     assert_eq!(
         FnCall::parse("simple_test(123)").unwrap(),
         FnCall {
-            fn_name: Ident::from_str("simple_test"),
-            args: vec![Expression::NumLit(NumLit(123_f64))]
+            fn_name: Ident::test_value("simple_test"),
+            args: vec![Expression::num_lit(123_f64)]
         }
     )
 }
@@ -113,7 +110,7 @@ impl Parsable for Variable {
 fn test_variable() {
     assert_eq!(
         Variable::parse("var_name").unwrap(),
-        Variable(Ident::from_str("var_name"))
+        Variable(Ident::test_value("var_name"))
     );
     assert!(Variable::is_err("1test"))
 }
@@ -128,9 +125,7 @@ pub enum Expression {
     FnCall,
     Variable,
 
-    NumLit,
-    StringLit,
-    // TODO add variables
+    Literal,
 }
 
 impl Expression {
@@ -146,10 +141,21 @@ impl Expression {
                 FnCall::parser_with(expr.clone()).map(Self::FnCall),
                 Variable::parser().map(Self::Variable),
                 // self contained expressions do not need a specific order
-                NumLit::parser().map(Self::NumLit),
-                StringLit::parser().map(Self::StringLit),
+                Literal::parser().map(Self::Literal),
             ))
         })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn num_lit(lit: f64) -> Expression {
+        use crate::literals::{Literal, NumLit};
+        Expression::Literal(Literal::Number(NumLit(lit)))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn string_lit(lit: &str) -> Expression {
+        use crate::literals::{Literal, StringLit};
+        Expression::Literal(Literal::String(StringLit(lit.to_owned())))
     }
 }
 

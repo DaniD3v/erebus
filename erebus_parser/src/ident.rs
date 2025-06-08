@@ -9,12 +9,13 @@ use super::{
     r#type::TypeLiteral,
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Ident(String);
 
 impl Ident {
     #[cfg(test)]
-    pub fn from_str(str: &str) -> Self {
+    pub fn test_value(str: &str) -> Self {
+        // TODO check validity
         Ident(str.to_owned())
     }
 }
@@ -74,15 +75,15 @@ fn test_ident_with_type() {
     assert_eq!(
         IdentWithType::parse("test: String").unwrap(),
         IdentWithType {
-            ident: Ident::from_str("test"),
-            r#type: TypeLiteral::Ident(Ident::from_str("String")),
+            ident: Ident::test_value("test"),
+            r#type: TypeLiteral::Ident(Ident::test_value("String")),
         }
     );
     assert_eq!(
         IdentWithType::parse("test2: \n_String").unwrap(),
         IdentWithType {
-            ident: Ident::from_str("test2"),
-            r#type: TypeLiteral::Ident(Ident::from_str("_String")),
+            ident: Ident::test_value("test2"),
+            r#type: TypeLiteral::Ident(Ident::test_value("_String")),
         }
     );
     assert!(IdentWithType::is_err("test3 : String"))
@@ -126,15 +127,15 @@ fn test_ident_with_optional_type() {
     assert_eq!(
         IdentWithOptionalType::parse("test").unwrap(),
         IdentWithOptionalType {
-            ident: Ident::from_str("test"),
+            ident: Ident::test_value("test"),
             r#type: None
         }
     );
     assert_eq!(
         IdentWithOptionalType::parse("str: \n\tString").unwrap(),
         IdentWithOptionalType {
-            ident: Ident::from_str("str"),
-            r#type: Some(TypeLiteral::Ident(Ident::from_str("String")))
+            ident: Ident::test_value("str"),
+            r#type: Some(TypeLiteral::Ident(Ident::test_value("String")))
         }
     )
 }

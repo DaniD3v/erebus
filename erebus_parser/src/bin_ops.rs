@@ -110,36 +110,28 @@ impl Parsable for BinExpr {
 
 #[test]
 fn test_bin_expr() {
-    use crate::literals::NumLit;
-
     assert_eq!(
         BinExpr::parse("1 + 1").unwrap(),
         BinExpr::Add(AddExpr::new([
-            Expression::NumLit(NumLit(1_f64)),
-            Expression::NumLit(NumLit(1_f64))
+            Expression::num_lit(1_f64),
+            Expression::num_lit(1_f64)
         ]))
     );
     assert_eq!(
         BinExpr::parse("1 + 2 * 3 / 4").unwrap(),
         BinExpr::Add(AddExpr::new([
-            Expression::NumLit(NumLit(1_f64)),
+            Expression::num_lit(1_f64),
             MulExpr::as_expr([
-                Expression::NumLit(NumLit(2_f64)),
-                DivExpr::as_expr([
-                    Expression::NumLit(NumLit(3_f64)),
-                    Expression::NumLit(NumLit(4_f64))
-                ])
+                Expression::num_lit(2_f64),
+                DivExpr::as_expr([Expression::num_lit(3_f64), Expression::num_lit(4_f64),])
             ])
         ]))
     );
     assert_eq!(
         BinExpr::parse("3 + 2 - 1").unwrap(),
         BinExpr::Add(AddExpr::new([
-            Expression::NumLit(NumLit(3_f64)),
-            SubExpr::as_expr([
-                Expression::NumLit(NumLit(2_f64)),
-                Expression::NumLit(NumLit(1_f64)),
-            ])
+            Expression::num_lit(3_f64),
+            SubExpr::as_expr([Expression::num_lit(2_f64), Expression::num_lit(1_f64)])
         ]))
     );
     assert_eq!(
@@ -147,19 +139,13 @@ fn test_bin_expr() {
         Expression::parse("1 * 2 + 3 * 4 + 5 == 6").unwrap(),
         EqualsExpr::as_expr([
             AddExpr::as_expr([
-                MulExpr::as_expr([
-                    Expression::NumLit(NumLit(1_f64)),
-                    Expression::NumLit(NumLit(2_f64)),
-                ]),
+                MulExpr::as_expr([Expression::num_lit(1_f64), Expression::num_lit(2_f64),]),
                 AddExpr::as_expr([
-                    MulExpr::as_expr([
-                        Expression::NumLit(NumLit(3_f64)),
-                        Expression::NumLit(NumLit(4_f64)),
-                    ]),
-                    Expression::NumLit(NumLit(5_f64))
+                    MulExpr::as_expr([Expression::num_lit(3_f64), Expression::num_lit(4_f64),]),
+                    Expression::num_lit(5_f64)
                 ])
             ]),
-            Expression::NumLit(NumLit(6_f64))
+            Expression::num_lit(6_f64)
         ])
     );
 }

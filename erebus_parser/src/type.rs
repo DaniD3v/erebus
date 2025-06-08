@@ -121,22 +121,22 @@ impl Parsable for TypeLiteral {
 fn test_type() {
     assert_eq!(
         TypeLiteral::parse("String").unwrap(),
-        TypeLiteral::Ident(Ident::from_str("String"))
+        TypeLiteral::Ident(Ident::test_value("String"))
     );
     assert_eq!(
         TypeLiteral::parse("fn(int,) -> String").unwrap(),
         TypeLiteral::Fn(Box::new(FnSignatureType {
-            params: vec![TypeLiteral::Ident(Ident::from_str("int"))],
-            return_type: TypeLiteral::Ident(Ident::from_str("String"))
+            params: vec![TypeLiteral::Ident(Ident::test_value("int"))],
+            return_type: TypeLiteral::Ident(Ident::test_value("String"))
         }))
     );
     assert_eq!(
         TypeLiteral::parse("(String, (int, T))").unwrap(),
         TypeLiteral::Tuple(TupleType(vec![
-            TypeLiteral::Ident(Ident::from_str("String")),
+            TypeLiteral::Ident(Ident::test_value("String")),
             TypeLiteral::Tuple(TupleType(vec![
-                TypeLiteral::Ident(Ident::from_str("int")),
-                TypeLiteral::Ident(Ident::from_str("T")),
+                TypeLiteral::Ident(Ident::test_value("int")),
+                TypeLiteral::Ident(Ident::test_value("T")),
             ]))
         ]))
     )

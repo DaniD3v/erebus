@@ -49,6 +49,6 @@ fn main() {
     };
 
     if matches!(args.emit, Emit::Ast) {
-        println!("Ast: {:#?}", ast)
+        println!("Ast: {ast:#?}")
     }
 }
