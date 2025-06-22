@@ -9,7 +9,7 @@ use super::{
     r#type::TypeLiteral,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
 pub struct Ident(String);
 
 impl Ident {

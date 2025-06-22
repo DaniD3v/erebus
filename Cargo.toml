@@ -6,7 +6,7 @@ version.workspace = true
 edition.workspace = true
 
 [workspace]
-members = ["erebus_parser"]
+members = ["erebus_mir", "erebus_parser"]
 
 [workspace.package]
 version = "0.1.0"
@@ -16,6 +16,7 @@ edition = "2021"
 enum_dispatch = "0.3.13"
 
 [dependencies]
+erebus_mir = { path = "./erebus_mir" }
 erebus_parser = { path = "./erebus_parser" }
 
 clap = { version = "4.5.17", features = ["derive"] }

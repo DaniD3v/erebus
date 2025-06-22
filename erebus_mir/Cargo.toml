@@ -1,0 +1,7 @@
+[package]
+name = "erebus_mir"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+erebus_parser = { path = "../erebus_parser" }

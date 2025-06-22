@@ -1,12 +1,13 @@
 mod bin_ops;
-mod expr;
-mod ident;
-mod literals;
+pub mod expr;
+pub mod ident;
+pub mod literals;
 mod module;
 mod parsable;
-mod statement;
+pub mod statement;
 mod syntax_elements;
 mod r#type;
 
+pub use expr::Expression;
 pub use module::RootModule;
 pub use parsable::Parsable;

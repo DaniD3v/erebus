@@ -4,6 +4,7 @@ use ariadne::{sources, Color, Label, Report, ReportKind};
 use clap::Parser as ClapParser;
 
 use args::{Args, Emit};
+use erebus_mir::Crate;
 use erebus_parser::{Parsable, RootModule};
 
 mod args;
@@ -51,4 +52,7 @@ fn main() {
     if matches!(args.emit, Emit::Ast) {
         println!("Ast: {ast:#?}")
     }
+
+    let mir = Crate::new(ast);
+    dbg!(mir);
 }

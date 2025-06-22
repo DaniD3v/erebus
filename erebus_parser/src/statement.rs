@@ -19,7 +19,7 @@ use super::{
 #[derive(Debug, PartialEq)]
 pub struct MaybePublic<T> {
     is_pub: bool,
-    inner: T,
+    pub inner: T,
 }
 
 impl<T: Parsable> Parsable for MaybePublic<T> {
@@ -90,7 +90,7 @@ fn test_let() {
 
 #[derive(Debug, PartialEq)]
 pub struct FnDef {
-    name: Ident,
+    pub name: Ident,
 
     params: Vec<IdentWithType>,
     return_type: TypeLiteral,
@@ -148,7 +148,7 @@ fn test_fn() {
 
 #[derive(Debug, PartialEq)]
 pub struct StructDef {
-    name: Ident,
+    pub name: Ident,
     fields: Vec<IdentWithType>,
 }
 
@@ -194,6 +194,7 @@ pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 /// The statements you can put at the outermost scope of each file.
 #[enum_dispatch]
 #[derive(Debug, PartialEq)]
+#[non_exhaustive]
 pub enum RawTopLevelStatement {
     Let,
     FnDef,
