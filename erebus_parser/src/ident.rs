@@ -4,10 +4,9 @@ use chumsky::{
     IterParser, Parser,
 };
 
-use super::{
-    parsable::{Parsable, ParsableParser},
-    r#type::TypeLiteral,
-};
+use crate::{r#type::Type, Expression};
+
+use super::parsable::{Parsable, ParsableParser};
 
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
 pub struct Ident(String);
@@ -46,27 +45,27 @@ fn test_ident() {
     assert!(Ident::is_err(" starts_space123"));
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IdentWithType {
     pub ident: Ident,
-    pub r#type: TypeLiteral,
+    pub r#type: Type,
 }
 
 impl IdentWithType {
-    pub fn parser_with<'src>(
-        existing_parser: impl ParsableParser<'src, TypeLiteral>,
+    fn parser_with<'src>(
+        expression_parser: impl ParsableParser<'src, Expression>,
     ) -> impl ParsableParser<'src, Self> {
         Ident::parser()
             .then_ignore(just(":"))
             .padded()
-            .then(existing_parser)
+            .then(Type::parser_with(expression_parser))
             .map(|(ident, r#type)| Self { ident, r#type })
     }
 }
 
 impl Parsable for IdentWithType {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        Self::parser_with(TypeLiteral::parser())
+        Self::parser_with(Expression::parser())
     }
 }
 
@@ -76,23 +75,40 @@ fn test_ident_with_type() {
         IdentWithType::parse("test: String").unwrap(),
         IdentWithType {
             ident: Ident::test_value("test"),
-            r#type: TypeLiteral::Ident(Ident::test_value("String")),
+            r#type: Type::test_ident("String"),
         }
     );
     assert_eq!(
         IdentWithType::parse("test2: \n_String").unwrap(),
         IdentWithType {
             ident: Ident::test_value("test2"),
-            r#type: TypeLiteral::Ident(Ident::test_value("_String")),
+            r#type: Type::test_ident("_String"),
         }
     );
     assert!(IdentWithType::is_err("test3 : String"))
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IdentWithOptionalType {
     pub ident: Ident,
-    pub r#type: Option<TypeLiteral>,
+    pub r#type: Option<Type>,
+}
+
+impl IdentWithOptionalType {
+    pub fn parser_with<'src>(
+        expression_parser: impl ParsableParser<'src, Expression> + 'src,
+    ) -> impl ParsableParser<'src, Self> {
+        choice((
+            IdentWithType::parser_with(expression_parser).map(Self::from),
+            Ident::parser().map(Self::from),
+        ))
+    }
+}
+
+impl Parsable for IdentWithOptionalType {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
+        Self::parser_with(Expression::parser())
+    }
 }
 
 impl From<Ident> for IdentWithOptionalType {
@@ -113,15 +129,6 @@ impl From<IdentWithType> for IdentWithOptionalType {
     }
 }
 
-impl Parsable for IdentWithOptionalType {
-    fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        choice((
-            IdentWithType::parser().map(Self::from),
-            Ident::parser().map(Self::from),
-        ))
-    }
-}
-
 #[test]
 fn test_ident_with_optional_type() {
     assert_eq!(
@@ -135,7 +142,7 @@ fn test_ident_with_optional_type() {
         IdentWithOptionalType::parse("str: \n\tString").unwrap(),
         IdentWithOptionalType {
             ident: Ident::test_value("str"),
-            r#type: Some(TypeLiteral::Ident(Ident::test_value("String")))
+            r#type: Some(Type::test_ident("String"))
         }
     )
 }

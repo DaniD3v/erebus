@@ -6,7 +6,7 @@ use chumsky::{
 
 use crate::parsable::{Parsable, ParsableParser};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct StringLit(pub String);
 
 impl Parsable for StringLit {

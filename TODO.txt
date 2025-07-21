@@ -1,0 +1,101 @@
+TODO
+
+COW for Ident
+add check that expression doesn't parse fn_test() as a variable
+use pratt parsing instead of manual impl
+
+IR:
+
+- ast_node
+
+- public scope 
+- private scope // e.g. for structs this will be handled specially
+
+- reference to variable/ fn this refers to // only for certain IR types
+- is_const_evalable
+
+// how do I handle new lets/ mut new assignments?:
+// - var = assignments can be ignored
+//   (I think this is actually wrong because that could cause issues with const eval
+//   I'll still handle it like this tho because mut variable const eval is tough and
+//   I need to do it seperatly anyways)
+// - new lets will simply shadow the old variable name.
+
+the resolver has a stack of active scopes and can drop/add some.
+// a module resets all scopes
+
+// how do I handle expressions?
+// just ast_node + is_const_evalable?
+
+// literals?
+// 
+
+add ParsableWith trait and add a boxed_parser_with method
+
+--- Types as a Value ---
+All "type values" are a single type "Type"
+
+the type value does not make any sense at runtime
+This requires const eval (tho generics do, too)
+
+benefit:
+type decleration can be == any other decleration
+
+downsides:
+need an api to make types (a lot of compiler magic)
+useless if I can instead just have proper macros
+ambigouous whether T() == T() considering 2 equal structs aren't
+
+Type declerations need to be treated differently anyways because they are not defined linearly
+damn static lets or functions should must also not be treated linearly
+
+// tuple could be a simple fn
+
+
+# How does mir work?
+
+What do I want:
+Objects that can navigate to the other objects
+requires: reference to arena
+
+Object needs to be evaluated lazily
+requires:
+	- mut reference to arena
+	-
+
+Struct:
+	fields [Struct]
+
+
+crate root:
+	
+
+exmaple:
+mod A {
+	use super::B;
+
+	struct A {
+		b: B::B
+	}
+}
+
+mod B {
+	use super::A
+
+	struct B {
+		a: A::A
+	}
+}
+
+use A::A
+
+start eval A:
+named scope {
+	B -> Lazy<Import>
+	A -> Lazy<Import>
+}
+
+eval A::A
+named scope fields {
+	
+}

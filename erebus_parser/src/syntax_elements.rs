@@ -34,7 +34,7 @@ macro_rules! generate_operator_parsable {
 }
 
 #[cfg(test)]
-use super::expr::Expression;
+use super::expression::Expression;
 
 macro_rules! generate_binary_operator_parsable {
     ($op_name:ident, $expr_name:ident, $enum_variant:ident, $precedence:literal, $str_repr:literal) => {
@@ -58,7 +58,7 @@ macro_rules! generate_binary_operator_parsable {
     };
 }
 
-generate_operator_parsable! {MacroCallOp, '!'}
+generate_operator_parsable! {MinusPrefix, '-', padded}
 generate_operator_parsable! {AssignmentOp, '=', padded}
 generate_operator_parsable! {ReturnTypeOp, "->", padded}
 
@@ -82,5 +82,4 @@ generate_keyword_parsable! {MutModifier, "mut"}
 generate_keyword_parsable! {PubModifier, "pub"}
 
 generate_keyword_parsable! {LetKeyword, "let"}
-generate_keyword_parsable! {StructKeyword, "struct"}
 generate_keyword_parsable! {FnKeyword, "fn"}

@@ -5,7 +5,7 @@ use chumsky::{
 
 use crate::{
     parsable::{Parsable, ParsableParser, ParserError},
-    syntax_elements::Dot,
+    syntax_elements::{Dot, MinusPrefix},
 };
 
 fn based_float_literal_to_value(base: u32, int: &str, fractional: &str) -> f64 {
@@ -35,7 +35,7 @@ fn test_based_float_literal_to_value() {
 }
 
 // TODO allow underscores for readability
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct NumLit(pub f64);
 
 impl NumLit {
@@ -50,13 +50,14 @@ impl NumLit {
     fn raw_base_parser<'src, const BASE: u32>(
         symbol: &'static str,
     ) -> impl ParsableParser<'src, Self> {
-        just(symbol)
-            .ignored()
+        MinusPrefix::parser()
+            .or_not()
+            .then_ignore(just(symbol))
             // ignore leading zeros
             .then_ignore(just('0').repeated())
             .then(text::int(BASE))
             .then(Dot::parser().ignored().then(text::int(BASE)).or_not())
-            .try_map(|((_, int), fractional), span| {
+            .try_map(|((minus_prefix, int), fractional), span| {
                 if fractional.is_some() && BASE > 10 {
                     // 0x0.dead_beef() is ambiguous
                     return Err(ParserError::custom(
@@ -68,7 +69,13 @@ impl NumLit {
                 // the fractional string doesn't exist -> ""
                 let fractional = fractional.unwrap_or(((), "")).1;
 
-                Ok(Self(based_float_literal_to_value(BASE, int, fractional)))
+                Ok(Self({
+                    let unsigned_value = based_float_literal_to_value(BASE, int, fractional);
+                    match minus_prefix {
+                        Some(_) => -unsigned_value,
+                        None => unsigned_value,
+                    }
+                }))
             })
     }
 }

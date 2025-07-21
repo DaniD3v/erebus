@@ -1,22 +1,18 @@
-use std::fmt::Debug;
-
 use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
-use enum_dispatch::enum_dispatch;
 
 use crate::ident::{Ident, IdentWithType};
 
 use super::{
-    expr::{CodeScope, Expression},
+    expression::{CodeScope, Expression},
     ident::IdentWithOptionalType,
     parsable::{Parsable, ParsableParser},
-    r#type::TypeLiteral,
     syntax_elements::{
-        AssignmentOp, Comma, FnKeyword, LCurly, LParen, LetKeyword, MutModifier, PubModifier,
-        RCurly, RParen, ReturnTypeOp, Semicolon, StructKeyword,
+        AssignmentOp, Comma, FnKeyword, LParen, LetKeyword, MutModifier, PubModifier, RParen,
+        ReturnTypeOp, Semicolon,
     },
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct MaybePublic<T> {
     is_pub: bool,
     pub inner: T,
@@ -34,7 +30,7 @@ impl<T: Parsable> Parsable for MaybePublic<T> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Let {
     pub is_mut: bool,
 
@@ -42,13 +38,15 @@ pub struct Let {
     pub right: Expression,
 }
 
-impl Parsable for Let {
-    fn parser<'src>() -> impl ParsableParser<'src, Self> {
+impl Let {
+    fn parser_with<'src>(
+        expression_parser: impl ParsableParser<'src, Expression> + 'src,
+    ) -> impl ParsableParser<'src, Self> {
         LetKeyword::parser()
             .then(MutModifier::parser().padded().or_not())
-            .then(IdentWithOptionalType::parser().padded())
+            .then(IdentWithOptionalType::parser_with(expression_parser.clone()).padded())
             .then_ignore(AssignmentOp::parser())
-            .then(Expression::parser())
+            .then(expression_parser)
             .map(|(((_, mut_modifier), left), right)| Self {
                 is_mut: mut_modifier.is_some(),
 
@@ -58,8 +56,16 @@ impl Parsable for Let {
     }
 }
 
+impl Parsable for Let {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
+        Self::parser_with(Expression::parser())
+    }
+}
+
 #[test]
 fn test_let() {
+    use crate::Type;
+
     assert_eq!(
         Let::parse("let _test = 123").unwrap(),
         Let {
@@ -76,7 +82,7 @@ fn test_let() {
 
             left: IdentWithType {
                 ident: Ident::test_value("o"),
-                r#type: TypeLiteral::Ident(Ident::test_value("String")),
+                r#type: Type::test_ident("String"),
             }
             .into(),
             right: Expression::string_lit("helloTest"),
@@ -88,14 +94,13 @@ fn test_let() {
     assert!(Let::is_err("let mut a == 321"));
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FnDef {
     pub name: Ident,
+    pub body: CodeScope,
 
-    params: Vec<IdentWithType>,
-    return_type: TypeLiteral,
-
-    body: CodeScope,
+    pub params: Vec<IdentWithType>,
+    pub return_type: Ident,
 }
 
 impl Parsable for FnDef {
@@ -112,7 +117,7 @@ impl Parsable for FnDef {
             )
             .then_ignore(RParen::parser())
             .then_ignore(ReturnTypeOp::parser().padded())
-            .then(TypeLiteral::parser())
+            .then(Ident::parser())
             .then(CodeScope::parser())
             .map(|(((name, params), return_type), body)| Self {
                 name,
@@ -127,6 +132,8 @@ impl Parsable for FnDef {
 
 #[test]
 fn test_fn() {
+    use crate::Type;
+
     assert_eq!(
         FnDef::parse("fn basic_test_fn(arg1: int) -> String { \"test\" }").unwrap(),
         FnDef {
@@ -134,9 +141,9 @@ fn test_fn() {
 
             params: vec![IdentWithType {
                 ident: Ident::test_value("arg1"),
-                r#type: TypeLiteral::Ident(Ident::test_value("int")),
+                r#type: Type::test_ident("int"),
             }],
-            return_type: TypeLiteral::Ident(Ident::test_value("String")),
+            return_type: Ident::test_value("String"),
 
             body: CodeScope {
                 statements: Vec::new(),
@@ -146,59 +153,15 @@ fn test_fn() {
     )
 }
 
-#[derive(Debug, PartialEq)]
-pub struct StructDef {
-    pub name: Ident,
-    fields: Vec<IdentWithType>,
-}
-
-impl Parsable for StructDef {
-    fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        StructKeyword::parser()
-            .ignore_then(Ident::parser().padded())
-            .then_ignore(LCurly::parser())
-            .then(
-                IdentWithType::parser()
-                    .separated_by(Comma::parser())
-                    .allow_trailing()
-                    .collect(),
-            )
-            .then_ignore(RCurly::parser())
-            .map(|(name, fields)| Self { name, fields })
-    }
-}
-
-#[test]
-fn test_struct_def() {
-    assert_eq!(
-        StructDef::parse("struct SimpleTest { a: int, b: String, }").unwrap(),
-        StructDef {
-            name: Ident::test_value("SimpleTest"),
-            fields: vec![
-                IdentWithType {
-                    ident: Ident::test_value("a"),
-                    r#type: TypeLiteral::Ident(Ident::test_value("int")),
-                },
-                IdentWithType {
-                    ident: Ident::test_value("b"),
-                    r#type: TypeLiteral::Ident(Ident::test_value("String")),
-                }
-            ]
-        }
-    )
-}
-
 // TODO test
 pub type TopLevelStatement = MaybePublic<RawTopLevelStatement>;
 
 /// The statements you can put at the outermost scope of each file.
-#[enum_dispatch]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 #[non_exhaustive]
 pub enum RawTopLevelStatement {
-    Let,
-    FnDef,
-    StructDef,
+    Let(Let),
+    FnDef(FnDef),
 }
 
 impl Parsable for RawTopLevelStatement {
@@ -208,7 +171,6 @@ impl Parsable for RawTopLevelStatement {
                 .then_ignore(Semicolon::parser())
                 .map(Self::Let),
             FnDef::parser().map(Self::FnDef),
-            StructDef::parser().map(Self::StructDef),
         ))
         .padded()
     }
@@ -217,17 +179,24 @@ impl Parsable for RawTopLevelStatement {
 /// Something that cannot return a value.
 ///
 /// Always delimited with a semicolon.
-#[enum_dispatch]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
-    Let,
+    Let(Let),
+}
+
+impl Statement {
+    pub fn parser_with<'src>(
+        expression_parser: impl ParsableParser<'src, Expression> + 'src,
+    ) -> impl ParsableParser<'src, Self> {
+        Let::parser_with(expression_parser)
+            .then_ignore(Semicolon::parser())
+            .map(Self::Let)
+    }
 }
 
 impl Parsable for Statement {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        Let::parser()
-            .then_ignore(Semicolon::parser())
-            .map(Self::Let)
+        Self::parser_with(Expression::parser())
     }
 }
 

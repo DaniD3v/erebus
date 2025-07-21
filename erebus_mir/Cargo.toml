@@ -5,3 +5,9 @@ edition.workspace = true
 
 [dependencies]
 erebus_parser = { path = "../erebus_parser" }
+
+bincode = { version = "2.0.1", features = ["serde"] }
+serde = { version = "1.0.219", features = ["derive"] }
+uuid = { version = "1.17.0", features = ["serde", "v4", "v5"] }
+
+derive-debug = "0.1.2"

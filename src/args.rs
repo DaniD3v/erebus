@@ -16,7 +16,7 @@ pub struct Args {
     pub emit: Emit,
 }
 
-#[derive(Default, ValueEnum, Clone, Debug)]
+#[derive(Default, Debug, ValueEnum, Clone)]
 pub enum Emit {
     #[default]
     Ast,

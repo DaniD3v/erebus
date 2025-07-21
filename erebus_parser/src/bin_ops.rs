@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use chumsky::{prelude::choice, Parser};
 
 use super::{
-    expr::Expression,
+    expression::Expression,
     parsable::{Parsable, ParsableParser},
     syntax_elements::{AddExpr, DivExpr, EqualsExpr, MulExpr, SubExpr},
 };
@@ -15,7 +15,7 @@ pub trait HasPrecedence {
     const PRECEDENCE: Precedence;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct GenericBinOp<OP: Parsable + HasPrecedence> {
     op: PhantomData<OP>,
     expressions: [Expression; 2],
@@ -50,7 +50,7 @@ impl<OP: Parsable + HasPrecedence + Debug> GenericBinOp<OP> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinExpr {
     Equals(EqualsExpr),
 

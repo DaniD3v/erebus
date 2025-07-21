@@ -7,7 +7,7 @@ pub use string::StringLit;
 
 use crate::{parsable::ParsableParser, Parsable};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     Number(NumLit),
     String(StringLit),

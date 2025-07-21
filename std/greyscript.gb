@@ -1,0 +1,8 @@
+
+let params = -3 - 1 * 1 - 13.3;
+
+let Any = RawType();
+
+fn print(data: Any) -> String {
+    "test123"
+}
