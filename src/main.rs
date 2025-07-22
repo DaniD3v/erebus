@@ -33,16 +33,19 @@ fn main() {
             let filename = args.input_file.display().to_string();
 
             for err in &errors {
-                Report::build(ReportKind::Error, filename.clone(), err.span().start)
-                    .with_message(err.to_string())
-                    .with_label(
-                        Label::new((filename.clone(), err.span().into_range()))
-                            .with_message(err.reason().to_string())
-                            .with_color(Color::Red),
-                    )
-                    .finish()
-                    .print(sources([(filename.clone(), input_content.clone())]))
-                    .unwrap()
+                Report::build(
+                    ReportKind::Error,
+                    (filename.clone(), err.span().into_range()),
+                )
+                .with_message(err.to_string())
+                .with_label(
+                    Label::new((filename.clone(), err.span().into_range()))
+                        .with_message(err.reason().to_string())
+                        .with_color(Color::Red),
+                )
+                .finish()
+                .print(sources([(filename.clone(), input_content.clone())]))
+                .unwrap()
             }
 
             failed_compiling(&args.input_file, errors.len())

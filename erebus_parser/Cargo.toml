@@ -5,6 +5,5 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-enum_dispatch.workspace = true
-
-chumsky = "=1.0.0-alpha.7"
+chumsky.workspace = true
+ariadne.workspace = true
