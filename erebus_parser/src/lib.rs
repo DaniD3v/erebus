@@ -7,6 +7,7 @@ mod parsable;
 pub mod statement;
 mod syntax_elements;
 mod r#type;
+mod span;
 
 pub use expression::Expression;
 pub use module::RootModule;

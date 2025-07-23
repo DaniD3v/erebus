@@ -1,36 +1,36 @@
 use chumsky::{
     prelude::{choice, just},
     text::ident,
-    IterParser, Parser,
+    Parser,
 };
 
-use crate::{r#type::Type, Expression};
+use crate::{r#type::Type, span::Span, Expression};
 
 use super::parsable::{Parsable, ParsableParser};
 
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
-pub struct Ident(String);
+pub struct Ident {
+    value: String,
+    span: Span,
+}
 
 impl Ident {
     #[cfg(test)]
     pub fn test_value(str: &str) -> Self {
         // TODO check validity
-        Ident(str.to_owned())
+        Self {
+            value: str.to_owned(),
+            span: Span::TEST_VALUE,
+        }
     }
 }
 
 impl Parsable for Ident {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
-        // TODO this is a hack.
-        // Allowing underscores in ident is already fixed in 8c8b82beb2a1b55ccee133266bbd52ffc0eb27a2
-        just('_')
-            .repeated()
-            .collect::<String>()
-            .then(ident())
-            .map(|(mut underscores, str)| {
-                underscores.push_str(str);
-                Self(underscores)
-            })
+        ident().map(|value: &str| Self {
+            value: value.to_owned(),
+            span: Span::TEST_VALUE,
+        })
     }
 }
 
@@ -38,7 +38,7 @@ impl Parsable for Ident {
 fn test_ident() {
     assert_eq!(
         Ident::parse("_albert132").unwrap(),
-        Ident("_albert132".into())
+        Ident::test_value("_albert132")
     );
     // assert_eq!(Ident::parse("hyphen-var").unwrap(), Ident("hyphen".into()));
     assert!(Ident::is_err("1starts_number"));
