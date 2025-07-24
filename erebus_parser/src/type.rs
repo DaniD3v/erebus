@@ -14,7 +14,7 @@ impl Type {
 }
 
 impl Parsable for Type {
-    fn parser<'src>() -> impl crate::parsable::ParsableParser<'src, Self> {
+    fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Self::parser_with(Expression::parser())
     }
 }
