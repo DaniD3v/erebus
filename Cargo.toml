@@ -16,6 +16,8 @@ edition = "2021"
 chumsky = "=1.0.0-alpha.8"
 ariadne = "0.5.1"
 
+educe = "0.6.0"
+
 [dependencies]
 erebus_mir = { path = "./erebus_mir" }
 erebus_parser = { path = "./erebus_parser" }

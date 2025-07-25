@@ -8,4 +8,4 @@ edition.workspace = true
 chumsky.workspace = true
 ariadne.workspace = true
 
-derivative = "2.2.0"
+educe.workspace = true
