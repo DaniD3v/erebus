@@ -7,3 +7,5 @@ edition.workspace = true
 [dependencies]
 chumsky.workspace = true
 ariadne.workspace = true
+
+derivative = "2.2.0"

@@ -5,14 +5,17 @@ use chumsky::{
     text::ident,
     Parser,
 };
+use derivative::Derivative;
 
 use crate::{r#type::Type, span::Span, Expression};
 
 use super::parsable::{Parsable, ParsableParser};
 
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialOrd, Ord, PartialEq, Eq)]
 pub struct Ident {
     value: String,
+    #[derivative(PartialOrd = "ignore", PartialEq = "ignore")]
     pub span: Span,
 }
 
