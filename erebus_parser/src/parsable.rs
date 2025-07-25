@@ -8,6 +8,9 @@ use chumsky::{
 
 use crate::span::Span;
 
+/// Erebus Parser
+///
+/// Wrapper around `ChumskyParser`/`Parser` to simplify generics
 pub trait ParsableParser<'src, SELF: Sized>:
     ChumskyParser<'src, ParserInput<'src>, SELF, extra::Err<ParserError<'src>>> + Clone
 {
@@ -20,10 +23,11 @@ impl<
 {
 }
 
-pub type ParserError<'src> = Rich<'src, <ParserInput<'src> as Input<'src>>::Token, ParserSpan>;
-type ParserSpan = Span;
+pub(crate) type ParserError<'src> =
+    Rich<'src, <ParserInput<'src> as Input<'src>>::Token, ParserSpan>;
+pub type ParserSpan = Span;
 
-pub type ParserInput<'src> = MappedSpan<ParserSpan, &'src str, fn(SimpleSpan) -> ParserSpan>;
+pub(crate) type ParserInput<'src> = MappedSpan<ParserSpan, &'src str, fn(SimpleSpan) -> ParserSpan>;
 
 pub trait Parsable: Sized {
     fn parser<'src>() -> impl ParsableParser<'src, Self>;

@@ -3,15 +3,15 @@ use std::iter::once;
 use erebus_parser::{ident::Ident, statement::Let as AstLet};
 
 use crate::{
-    expression::Expression, r#type::Type, statement::NamedStatement, IdentResolverFn, IntoMir,
+    expression::Expression, r#type::Type, statement::NamedStatement, ErrorNodeOr, IdentResolverFn,
+    IntoMir,
 };
 
 #[derive(Debug)]
 pub struct Let<'a> {
     ident: Ident,
-    r#type: Option<Type<'a>>,
-
-    value: Expression<'a>,
+    r#type: Option<ErrorNodeOr<'a, Type<'a>>>,
+    value: ErrorNodeOr<'a, Expression<'a>>,
 }
 
 impl<'a> Let<'a> {
@@ -32,12 +32,12 @@ impl<'a> IntoMir<'a> for AstLet {
     fn into_mir(
         self,
         ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
-        Let {
+    ) -> ErrorNodeOr<'a, Self::Target> {
+        Ok(Let {
             ident: self.left.ident,
             r#type: self.left.r#type.map(|t| t.into_mir(ident_resolver.clone())),
 
             value: self.right.into_mir(ident_resolver),
-        }
+        })
     }
 }

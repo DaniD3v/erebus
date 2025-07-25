@@ -216,6 +216,7 @@ dependencies = [
 name = "erebus_mir"
 version = "0.1.0"
 dependencies = [
+ "ariadne",
  "bincode",
  "derive-debug",
  "erebus_parser",

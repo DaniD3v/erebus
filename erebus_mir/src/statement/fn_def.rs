@@ -6,16 +6,16 @@ use crate::{
     code_scope::CodeScope,
     r#type::{IdentWithType, Type},
     statement::NamedStatement,
-    IdentResolverFn, IntoMir,
+    ErrorNodeOr, IdentResolverFn, IntoMir,
 };
 
 #[derive(Debug)]
 pub struct FnDef<'a> {
     name: Ident,
-    body: CodeScope<'a>,
+    body: ErrorNodeOr<'a, CodeScope<'a>>,
 
-    params: Vec<IdentWithType<'a>>,
-    return_type: Type<'a>,
+    params: Vec<ErrorNodeOr<'a, IdentWithType<'a>>>,
+    return_type: ErrorNodeOr<'a, Type<'a>>,
 }
 
 impl<'a> IntoMir<'a> for AstFnDef {
@@ -30,8 +30,8 @@ impl<'a> IntoMir<'a> for AstFnDef {
     fn into_mir(
         self,
         ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
-        FnDef {
+    ) -> ErrorNodeOr<'a, Self::Target> {
+        Ok(FnDef {
             name: self.name,
             body: self.body.into_mir(ident_resolver.clone()),
             params: self
@@ -40,6 +40,6 @@ impl<'a> IntoMir<'a> for AstFnDef {
                 .map(|param| param.into_mir(ident_resolver.clone()))
                 .collect(),
             return_type: todo!(),
-        }
+        })
     }
 }

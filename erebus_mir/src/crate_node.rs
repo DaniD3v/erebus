@@ -1,7 +1,11 @@
+use ariadne::Report;
 use erebus_parser::{ident::Ident, statement::TopLevelStatement, RootModule};
-use std::{marker::PhantomPinned, pin::Pin};
+use std::{marker::PhantomPinned, pin::Pin, rc::Rc};
 
-use crate::{lazy_named_attr_map::LazyNamedAttrMap, statement::NamedStatement, MirNode};
+use crate::{
+    lazy_named_attr_map::LazyNamedAttrMap, statement::NamedStatement, ErrorNode, ErrorNodeOr,
+    MirNode,
+};
 
 #[derive(Debug)]
 pub struct Crate<'a> {
@@ -34,11 +38,20 @@ impl<'a> Crate<'a> {
 impl<'a> MirNode for Crate<'a> {
     type Children = NamedStatement<'a>;
 
-    fn ident_resolver(&self, name: Ident) -> &Self::Children {
-        self.exports
+    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children> {
+        match self
+            .exports
             .as_ref()
             .expect("self.exports should be initialized")
             .get(&name)
-            .unwrap_or_else(|| panic!("Path at {name:?} could not be resolved at crate root"))
+        {
+            Some(resolved_statement) => resolved_statement.as_ref().map_err(Rc::clone),
+
+            None => Err(Rc::new(ErrorNode::new(
+                Report::build(ariadne::ReportKind::Error, name.span)
+                    .with_message(format!("The identifier '{name}' could not be found"))
+                    .finish(),
+            ))),
+        }
     }
 }

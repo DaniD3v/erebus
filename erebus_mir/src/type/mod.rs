@@ -17,7 +17,7 @@ use crate::{
         match_fn::MatchFn,
     },
     statement::NamedStatement,
-    IntoMir,
+    ErrorNodeOr, IntoMir,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -74,7 +74,7 @@ impl<'a> IntoMir<'a> for AstType {
     fn into_mir(
         self,
         ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
+    ) -> ErrorNodeOr<'a, Self::Target> {
         todo!()
     }
 }
@@ -89,7 +89,7 @@ impl<'a> PartialEq for Type<'a> {
 #[derive(Debug)]
 pub struct IdentWithType<'a> {
     ident: Ident,
-    r#type: Type<'a>,
+    r#type: ErrorNodeOr<'a, Type<'a>>,
 }
 
 impl<'a> IntoMir<'a> for AstIdentWithType {
@@ -104,10 +104,10 @@ impl<'a> IntoMir<'a> for AstIdentWithType {
     fn into_mir(
         self,
         ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
-        IdentWithType {
+    ) -> ErrorNodeOr<'a, Self::Target> {
+        Ok(IdentWithType {
             ident: self.ident,
             r#type: self.r#type.into_mir(ident_resolver),
-        }
+        })
     }
 }

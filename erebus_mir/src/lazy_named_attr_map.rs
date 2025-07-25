@@ -1,5 +1,3 @@
-#![expect(dead_code)]
-
 use std::{
     collections::BTreeMap,
     iter::once,
@@ -10,13 +8,13 @@ use std::{
 
 use erebus_parser::ident::Ident;
 
-use crate::{IdentResolverFn, IntoMir, MirNode};
+use crate::{ErrorNodeOr, IdentResolverFn, IntoMir, MirNode};
 
 type RawNamedAttrMap<'a, Emit> = BTreeMap<Ident, LazyLock<Emit, Box<dyn FnOnce() -> Emit + 'a>>>;
 
 #[derive(Debug)]
 pub(crate) struct LazyNamedAttrMap<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + 'a> {
-    named_attrs: RawNamedAttrMap<'a, Emit>,
+    named_attrs: RawNamedAttrMap<'a, ErrorNodeOr<'a, Emit>>,
     _phantom_ast: PhantomData<AstType>,
 }
 
@@ -53,7 +51,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
                         (
                             ident.clone(),
                             LazyLock::new(Box::new(|| statement.into_mir(ident_resolver))
-                                as Box<dyn FnOnce() -> Emit>),
+                                as Box<dyn FnOnce() -> ErrorNodeOr<'a, Emit>>),
                         )
                     })
                     .collect()
@@ -61,13 +59,6 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
 
             _phantom_ast: PhantomData,
         }
-    }
-
-    pub fn new<T: MirNode<Children = AstType::IdentResolverOutput>>(
-        ast_items: impl Iterator<Item = AstType>,
-        parent: &'a T,
-    ) -> Self {
-        Self::new_from_closure(ast_items, |ident| parent.ident_resolver(ident))
     }
 
     /// Safety:
@@ -91,7 +82,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
 
     pub fn eval(&self) {
         self.named_attrs.iter().for_each(|item| {
-            let _: Emit = **item.1;
+            let _: ErrorNodeOr<'_, Emit> = **item.1;
         });
     }
 }
@@ -99,7 +90,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
 impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit>> Deref
     for LazyNamedAttrMap<'a, Emit, AstType>
 {
-    type Target = RawNamedAttrMap<'a, Emit>;
+    type Target = RawNamedAttrMap<'a, ErrorNodeOr<'a, Emit>>;
 
     fn deref(&self) -> &Self::Target {
         &self.named_attrs

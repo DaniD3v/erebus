@@ -7,18 +7,37 @@ mod lazy_named_attr_map;
 mod statement;
 mod r#type;
 
+use std::rc::Rc;
+
 pub use crate_node::Crate;
+
+use ariadne::Report;
+
+#[derive(Debug)]
+struct ErrorNode<'a> {
+    report: Report<'a, Span>,
+}
+
+impl<'a> ErrorNode<'a> {
+    pub fn new(report: Report<'a, Span>) -> Self {
+        Self { report }
+    }
+}
+
+// The Rc improves performance by reducing the size of an `ErrorNodeOr`.
+// Owned ErrorNodes are sometimes necessary (e.g. a failed ident lookup)
+type ErrorNodeOr<'a, T> = Result<T, Rc<ErrorNode<'a>>>;
 
 trait MirNode {
     type Children;
 
-    fn ident_resolver(&self, name: Ident) -> &Self::Children;
+    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children>;
 }
 
 impl<T: MirNode> MirNode for Box<T> {
     type Children = T::Children;
 
-    fn ident_resolver(&self, name: Ident) -> &Self::Children {
+    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children> {
         (self as &T).ident_resolver(name)
     }
 }
@@ -36,7 +55,7 @@ trait IntoMir<'a> {
     fn into_mir(
         self,
         ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target;
+    ) -> ErrorNodeOr<'a, Self::Target>;
 }
 
 enum Scope {
@@ -47,9 +66,9 @@ enum Scope {
     Private,
 }
 
-use erebus_parser::ident::Ident;
+use erebus_parser::{ident::Ident, Span};
 
 use crate::r#type::Type;
 
-trait IdentResolverFn<'a, R: 'a>: 'a + Fn(Ident) -> &'a R {}
-impl<'a, R: 'a, T: 'a + Fn(Ident) -> &'a R> IdentResolverFn<'a, R> for T {}
+trait IdentResolverFn<'a, R: 'a>: 'a + Fn(Ident) -> ErrorNodeOr<'a, &'a R> {}
+impl<'a, R: 'a, T: 'a + Fn(Ident) -> ErrorNodeOr<'a, &'a R>> IdentResolverFn<'a, R> for T {}

@@ -13,7 +13,7 @@ use erebus_parser::{
     },
 };
 
-use crate::{IdentResolverFn, IntoMir};
+use crate::{ErrorNodeOr, IdentResolverFn, IntoMir};
 
 /// All the Mir Nodes that could result from a path resolution (e.g. std::Tree)
 #[derive(Debug)]
@@ -30,15 +30,17 @@ impl<'a> IntoMir<'a> for AstTopLevelStatement {
     fn into_mir(
         self,
         ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
-        match self.inner {
-            RawTopLevelStatement::Let(r#let) => NamedStatement::Let(r#let.into_mir(ident_resolver)),
+    ) -> ErrorNodeOr<'a, Self::Target> {
+        Ok(match self.inner {
+            RawTopLevelStatement::Let(r#let) => {
+                NamedStatement::Let(r#let.into_mir(ident_resolver)?)
+            }
             RawTopLevelStatement::FnDef(fn_def) => {
-                NamedStatement::FnDef(fn_def.into_mir(ident_resolver))
+                NamedStatement::FnDef(fn_def.into_mir(ident_resolver)?)
             }
 
             _ => todo!(), // TODO
-        }
+        })
     }
 
     fn get_idents(&self) -> impl Iterator<Item = &Ident> {
@@ -65,9 +67,9 @@ impl<'a> IntoMir<'a> for AstStatement {
     fn into_mir(
         self,
         ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
-        match self {
-            Self::Let(r#let) => NamedStatement::Let(r#let.into_mir(ident_resolver)),
-        }
+    ) -> ErrorNodeOr<'a, Self::Target> {
+        Ok(match self {
+            Self::Let(r#let) => NamedStatement::Let(r#let.into_mir(ident_resolver)?),
+        })
     }
 }

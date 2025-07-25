@@ -8,13 +8,13 @@ use std::iter::empty;
 
 use erebus_parser::{ident::Ident, Expression as AstExpression};
 
-use crate::{statement::NamedStatement, IntoMir};
+use crate::{statement::NamedStatement, ErrorNodeOr, IdentResolverFn, IntoMir};
 
 #[derive(Debug)]
 pub enum Expression<'a> {
-    FnCall(FnCall<'a>),
+    FnCall(ErrorNodeOr<'a, FnCall<'a>>),
     Literal(Literal),
-    Variable(&'a NamedStatement<'a>),
+    Variable(ErrorNodeOr<'a, &'a NamedStatement<'a>>),
 }
 
 impl<'a> IntoMir<'a> for AstExpression {
@@ -27,16 +27,16 @@ impl<'a> IntoMir<'a> for AstExpression {
 
     fn into_mir(
         self,
-        ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
-    ) -> Self::Target {
+        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+    ) -> ErrorNodeOr<'a, Self::Target> {
         #[expect(unused_variables)]
-        match self {
+        Ok(match self {
             AstExpression::BinExpr(bin_expr) => todo!(),
             AstExpression::FnCall(fn_call) => Expression::FnCall(fn_call.into_mir(ident_resolver)),
             AstExpression::Variable(variable) => Expression::Variable(ident_resolver(variable.0)),
             AstExpression::Literal(literal) => Expression::Literal(literal),
 
             _ => todo!(),
-        }
+        })
     }
 }

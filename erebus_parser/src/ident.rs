@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chumsky::{
     prelude::{choice, just},
     text::ident,
@@ -11,7 +13,7 @@ use super::parsable::{Parsable, ParsableParser};
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
 pub struct Ident {
     value: String,
-    span: Span,
+    pub span: Span,
 }
 
 impl Ident {
@@ -22,6 +24,12 @@ impl Ident {
             value: str.to_owned(),
             span: Span::TEST_VALUE,
         }
+    }
+}
+
+impl Display for Ident {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)
     }
 }
 
