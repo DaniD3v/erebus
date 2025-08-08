@@ -60,6 +60,7 @@ macro_rules! generate_binary_operator_parsable {
 
 generate_operator_parsable! {MinusPrefix, '-', padded}
 generate_operator_parsable! {AssignmentOp, '=', padded}
+generate_operator_parsable! {PathSegment, "::"}
 generate_operator_parsable! {ReturnTypeOp, "->", padded}
 
 generate_operator_parsable! {Dot, '.'}

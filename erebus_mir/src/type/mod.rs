@@ -73,7 +73,7 @@ impl<'a> IntoMir<'a> for AstType {
     #[expect(unused_variables)]
     fn into_mir(
         self,
-        ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl crate::PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         todo!()
     }
@@ -103,7 +103,7 @@ impl<'a> IntoMir<'a> for AstIdentWithType {
 
     fn into_mir(
         self,
-        ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl crate::PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(IdentWithType {
             ident: self.ident,

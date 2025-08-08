@@ -13,7 +13,7 @@ use erebus_parser::{
     },
 };
 
-use crate::{ErrorNodeOr, IdentResolverFn, IntoMir};
+use crate::{ErrorNodeOr, PathResolverFn, IntoMir};
 
 /// All the Mir Nodes that could result from a path resolution (e.g. std::Tree)
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl<'a> IntoMir<'a> for AstTopLevelStatement {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(match self.inner {
             RawTopLevelStatement::Let(r#let) => {
@@ -66,7 +66,7 @@ impl<'a> IntoMir<'a> for AstStatement {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(match self {
             Self::Let(r#let) => NamedStatement::Let(r#let.into_mir(ident_resolver)?),

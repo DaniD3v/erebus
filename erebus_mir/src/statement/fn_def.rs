@@ -6,7 +6,7 @@ use crate::{
     code_scope::CodeScope,
     r#type::{IdentWithType, Type},
     statement::NamedStatement,
-    ErrorNodeOr, IdentResolverFn, IntoMir,
+    ErrorNodeOr, PathResolverFn, IntoMir,
 };
 
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl<'a> IntoMir<'a> for AstFnDef {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(FnDef {
             name: self.name,

@@ -21,11 +21,11 @@ impl Parsable for Type {
 
 #[cfg(test)]
 impl Type {
-    pub fn test_ident(ident: &str) -> Self {
-        use crate::{expression::Variable, ident::Ident};
+    pub fn test_from_ident(ident: &str) -> Self {
+        use crate::{expression::Variable, Path};
 
         Self {
-            expr: Expression::Variable(Variable(Ident::test_value(ident))),
+            expr: Expression::Variable(Variable(Path::test_value([ident]))),
         }
     }
 }

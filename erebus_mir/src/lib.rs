@@ -31,14 +31,14 @@ type ErrorNodeOr<'a, T> = Result<T, Rc<ErrorNode<'a>>>;
 trait MirNode {
     type Children;
 
-    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children>;
+    fn path_resolver(&self, path: Path) -> ErrorNodeOr<'_, &Self::Children>;
 }
 
 impl<T: MirNode> MirNode for Box<T> {
     type Children = T::Children;
 
-    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children> {
-        (self as &T).ident_resolver(name)
+    fn path_resolver(&self, path: Path) -> ErrorNodeOr<'_, &Self::Children> {
+        (self as &T).path_resolver(path)
     }
 }
 
@@ -54,7 +54,7 @@ trait IntoMir<'a> {
     fn get_idents(&self) -> impl Iterator<Item = &Ident>;
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target>;
 }
 
@@ -66,9 +66,9 @@ enum Scope {
     Private,
 }
 
-use erebus_parser::{ident::Ident, Span};
+use erebus_parser::{ident::Ident, Path, Span};
 
 use crate::r#type::Type;
 
-trait IdentResolverFn<'a, R: 'a>: 'a + Fn(Ident) -> ErrorNodeOr<'a, &'a R> {}
-impl<'a, R: 'a, T: 'a + Fn(Ident) -> ErrorNodeOr<'a, &'a R>> IdentResolverFn<'a, R> for T {}
+trait PathResolverFn<'a, R: 'a>: 'a + Fn(Path) -> ErrorNodeOr<'a, &'a R> {}
+impl<'a, R: 'a, T: 'a + Fn(Path) -> ErrorNodeOr<'a, &'a R>> PathResolverFn<'a, R> for T {}

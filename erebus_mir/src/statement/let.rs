@@ -3,7 +3,7 @@ use std::iter::once;
 use erebus_parser::{ident::Ident, statement::Let as AstLet};
 
 use crate::{
-    expression::Expression, r#type::Type, statement::NamedStatement, ErrorNodeOr, IdentResolverFn,
+    expression::Expression, r#type::Type, statement::NamedStatement, ErrorNodeOr, PathResolverFn,
     IntoMir,
 };
 
@@ -31,7 +31,7 @@ impl<'a> IntoMir<'a> for AstLet {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(Let {
             ident: self.left.ident,

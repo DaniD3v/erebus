@@ -5,7 +5,7 @@ use erebus_parser::{expression::FnCall as AstFnCall, ident::Ident};
 use crate::{
     expression::Expression,
     statement::{FnDef, NamedStatement},
-    ErrorNodeOr, IdentResolverFn, IntoMir,
+    ErrorNodeOr, IntoMir, PathResolverFn,
 };
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl<'a> IntoMir<'a> for AstFnCall {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         Ok(FnCall {
             fn_obj: ident_resolver(self.fn_name).map(|statement| match statement {

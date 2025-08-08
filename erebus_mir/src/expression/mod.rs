@@ -8,7 +8,7 @@ use std::iter::empty;
 
 use erebus_parser::{ident::Ident, Expression as AstExpression};
 
-use crate::{statement::NamedStatement, ErrorNodeOr, IdentResolverFn, IntoMir};
+use crate::{statement::NamedStatement, ErrorNodeOr, PathResolverFn, IntoMir};
 
 #[derive(Debug)]
 pub enum Expression<'a> {
@@ -27,7 +27,7 @@ impl<'a> IntoMir<'a> for AstExpression {
 
     fn into_mir(
         self,
-        ident_resolver: impl IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, Self::Target> {
         #[expect(unused_variables)]
         Ok(match self {

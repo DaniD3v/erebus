@@ -8,7 +8,7 @@ use std::{
 
 use erebus_parser::ident::Ident;
 
-use crate::{ErrorNodeOr, IdentResolverFn, IntoMir, MirNode};
+use crate::{ErrorNodeOr, IntoMir, MirNode, PathResolverFn};
 
 type RawNamedAttrMap<'a, Emit> = BTreeMap<Ident, LazyLock<Emit, Box<dyn FnOnce() -> Emit + 'a>>>;
 
@@ -23,7 +23,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
 {
     fn new_from_closure(
         ast_items: impl Iterator<Item = AstType>,
-        ident_resolver: impl IdentResolverFn<'a, AstType::IdentResolverOutput> + Clone,
+        ident_resolver: impl PathResolverFn<'a, AstType::IdentResolverOutput> + Clone,
     ) -> Self {
         Self {
             named_attrs: {
@@ -76,7 +76,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
                 .as_ref()
                 .expect("Non-Null pointer should be passed to `unsafe_ident_resolver`");
 
-            parent_ref.ident_resolver(ident)
+            parent_ref.path_resolver(ident)
         })
     }
 

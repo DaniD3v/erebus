@@ -1,6 +1,9 @@
 use chumsky::{prelude::choice, text::whitespace, IterParser, Parser};
 
-use crate::ident::{Ident, IdentWithType};
+use crate::{
+    ident::{Ident, IdentWithType},
+    Type,
+};
 
 use super::{
     expression::{CodeScope, Expression},
@@ -82,7 +85,7 @@ fn test_let() {
 
             left: IdentWithType {
                 ident: Ident::test_value("o"),
-                r#type: Type::test_ident("String"),
+                r#type: Type::test_from_ident("String"),
             }
             .into(),
             right: Expression::string_lit("helloTest"),
@@ -100,7 +103,7 @@ pub struct FnDef {
     pub body: CodeScope,
 
     pub params: Vec<IdentWithType>,
-    pub return_type: Ident,
+    pub return_type: Type,
 }
 
 impl Parsable for FnDef {
@@ -117,7 +120,7 @@ impl Parsable for FnDef {
             )
             .then_ignore(RParen::parser())
             .then_ignore(ReturnTypeOp::parser().padded())
-            .then(Ident::parser())
+            .then(Type::parser())
             .then(CodeScope::parser())
             .map(|(((name, params), return_type), body)| Self {
                 name,
@@ -141,9 +144,9 @@ fn test_fn() {
 
             params: vec![IdentWithType {
                 ident: Ident::test_value("arg1"),
-                r#type: Type::test_ident("int"),
+                r#type: Type::test_from_ident("int"),
             }],
-            return_type: Ident::test_value("String"),
+            return_type: Type::test_from_ident("String"),
 
             body: CodeScope {
                 statements: Vec::new(),

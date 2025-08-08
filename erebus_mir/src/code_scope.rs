@@ -21,7 +21,7 @@ impl<'a> IntoMir<'a> for AstCodeScope {
 
     fn into_mir(
         self,
-        ident_resolver: impl crate::IdentResolverFn<'a, Self::IdentResolverOutput> + Clone,
+        ident_resolver: impl crate::PathResolverFn<'a, Self::IdentResolverOutput> + Clone,
     ) -> ErrorNodeOr<'a, CodeScope<'a>> {
         Ok(Self::Target {
             statements: self

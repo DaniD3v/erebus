@@ -9,30 +9,28 @@ use educe::Educe;
 
 use crate::{r#type::Type, span::Span, Expression};
 
-use super::parsable::{Parsable, ParsableParser};
+use crate::parsable::{Parsable, ParsableParser};
 
 #[derive(Educe, Debug, Clone)]
 #[educe(PartialOrd, Ord, PartialEq, Eq)]
 pub struct Ident {
     value: String,
+
     #[educe(PartialOrd(ignore), PartialEq(ignore))]
     pub span: Span,
 }
 
 impl Ident {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
     #[cfg(test)]
     pub fn test_value(str: &str) -> Self {
-        // TODO check validity
         Self {
             value: str.to_owned(),
             span: Span::TEST_VALUE,
         }
-    }
-}
-
-impl Display for Ident {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.value.fmt(f)
     }
 }
 
@@ -42,6 +40,12 @@ impl Parsable for Ident {
             value: value.to_owned(),
             span: Span::TEST_VALUE,
         })
+    }
+}
+
+impl Display for Ident {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)
     }
 }
 
@@ -86,14 +90,14 @@ fn test_ident_with_type() {
         IdentWithType::parse("test: String").unwrap(),
         IdentWithType {
             ident: Ident::test_value("test"),
-            r#type: Type::test_ident("String"),
+            r#type: Type::test_from_ident("String"),
         }
     );
     assert_eq!(
         IdentWithType::parse("test2: \n_String").unwrap(),
         IdentWithType {
             ident: Ident::test_value("test2"),
-            r#type: Type::test_ident("_String"),
+            r#type: Type::test_from_ident("_String"),
         }
     );
     assert!(IdentWithType::is_err("test3 : String"))
@@ -153,7 +157,7 @@ fn test_ident_with_optional_type() {
         IdentWithOptionalType::parse("str: \n\tString").unwrap(),
         IdentWithOptionalType {
             ident: Ident::test_value("str"),
-            r#type: Some(Type::test_ident("String"))
+            r#type: Some(Type::test_from_ident("String"))
         }
     )
 }

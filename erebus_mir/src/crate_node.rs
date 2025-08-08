@@ -1,5 +1,7 @@
+#![expect(unused_imports, unused_variables)]
+
 use ariadne::Report;
-use erebus_parser::{ident::Ident, statement::TopLevelStatement, RootModule};
+use erebus_parser::{statement::TopLevelStatement, Path, RootModule};
 use std::{marker::PhantomPinned, pin::Pin, rc::Rc};
 
 use crate::{
@@ -38,20 +40,22 @@ impl<'a> Crate<'a> {
 impl<'a> MirNode for Crate<'a> {
     type Children = NamedStatement<'a>;
 
-    fn ident_resolver(&self, name: Ident) -> ErrorNodeOr<'_, &Self::Children> {
-        match self
-            .exports
-            .as_ref()
-            .expect("self.exports should be initialized")
-            .get(&name)
-        {
-            Some(resolved_statement) => resolved_statement.as_ref().map_err(Rc::clone),
+    fn path_resolver(&self, path: Path) -> ErrorNodeOr<'_, &Self::Children> {
+        todo!()
 
-            None => Err(Rc::new(ErrorNode::new(
-                Report::build(ariadne::ReportKind::Error, name.span)
-                    .with_message(format!("The identifier '{name}' could not be found"))
-                    .finish(),
-            ))),
-        }
+        // match self
+        //     .exports
+        //     .as_ref()
+        //     .expect("self.exports should be initialized")
+        //     .get(&path)
+        // {
+        //     Some(resolved_statement) => resolved_statement.as_ref().map_err(Rc::clone),
+
+        //     None => Err(Rc::new(ErrorNode::new(
+        //         Report::build(ariadne::ReportKind::Error, path.span)
+        //             .with_message(format!("The identifier '{path}' could not be found"))
+        //             .finish(),
+        //     ))),
+        // }
     }
 }
