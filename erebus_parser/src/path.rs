@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Display, Formatter},
-    iter::once,
-};
+use std::fmt::{Display, Formatter};
 
 use chumsky::{IterParser, Parser};
 use educe::Educe;
@@ -35,17 +32,11 @@ impl Path {
 impl Parsable for Path {
     fn parser<'src>() -> impl ParsableParser<'src, Self> {
         Ident::parser()
-            .then(
-                PathSegment::parser()
-                    .ignored()
-                    .then(Ident::parser())
-                    .repeated()
-                    .collect::<Vec<_>>(),
-            )
-            .map_with(|(first_ident, idents), ctx| Self {
-                segments: once(first_ident)
-                    .chain(idents.into_iter().map(|(_, ident)| ident))
-                    .collect(),
+            .separated_by(PathSegment::parser())
+            .at_least(1)
+            .collect::<Vec<_>>()
+            .map_with(|idents, ctx| Self {
+                segments: idents,
                 span: ctx.span(),
             })
     }
