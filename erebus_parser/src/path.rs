@@ -78,5 +78,9 @@ fn test_path() {
         Path::parse("print").unwrap(),
         Ident::test_value("print").into(),
     );
+
+    assert!(Path::is_err("::mod::test"));
+    assert!(Path::is_err("mod::test::"));
+
     assert!(Path::is_err("1mod::abc"))
 }

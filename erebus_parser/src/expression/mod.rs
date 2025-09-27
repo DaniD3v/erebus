@@ -72,3 +72,8 @@ impl Parsable for Expression {
         Self::parser_with_precedence(Precedence::MIN)
     }
 }
+
+#[test]
+fn test_expression() {
+    assert_eq!(Expression::parse("1").unwrap(), Expression::num_lit(1f64))
+}

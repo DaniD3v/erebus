@@ -21,3 +21,11 @@ impl Parsable for Literal {
         ))
     }
 }
+
+#[test]
+fn test_literal() {
+    assert_eq!(
+        Literal::parse("123").unwrap(),
+        Literal::Number(NumLit(123f64))
+    );
+}
