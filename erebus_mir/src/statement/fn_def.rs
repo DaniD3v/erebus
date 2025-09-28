@@ -6,7 +6,7 @@ use crate::{
     code_scope::CodeScope,
     r#type::{IdentWithType, Type},
     statement::NamedStatement,
-    ErrorNodeOr, PathResolverFn, IntoMir,
+    ErrorNodeOr, IntoMir, PathResolverFn,
 };
 
 #[derive(Debug)]

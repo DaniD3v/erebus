@@ -13,7 +13,7 @@ use erebus_parser::{
     },
 };
 
-use crate::{ErrorNodeOr, PathResolverFn, IntoMir};
+use crate::{ErrorNodeOr, IntoMir, PathResolverFn};
 
 /// All the Mir Nodes that could result from a path resolution (e.g. std::Tree)
 #[derive(Debug)]

@@ -3,8 +3,8 @@ use std::iter::once;
 use erebus_parser::{ident::Ident, statement::Let as AstLet};
 
 use crate::{
-    expression::Expression, r#type::Type, statement::NamedStatement, ErrorNodeOr, PathResolverFn,
-    IntoMir,
+    expression::Expression, r#type::Type, statement::NamedStatement, ErrorNodeOr, IntoMir,
+    PathResolverFn,
 };
 
 #[derive(Debug)]

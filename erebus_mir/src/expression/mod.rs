@@ -8,7 +8,7 @@ use std::iter::empty;
 
 use erebus_parser::{ident::Ident, Expression as AstExpression};
 
-use crate::{statement::NamedStatement, ErrorNodeOr, PathResolverFn, IntoMir};
+use crate::{statement::NamedStatement, ErrorNodeOr, IntoMir, PathResolverFn};
 
 #[derive(Debug)]
 pub enum Expression<'a> {
