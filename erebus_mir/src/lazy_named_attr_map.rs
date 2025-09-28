@@ -13,14 +13,12 @@ use crate::{ErrorNodeOr, IntoMir, MirNode, PathResolverFn};
 type RawNamedAttrMap<'a, Emit> = BTreeMap<Ident, LazyLock<Emit, Box<dyn FnOnce() -> Emit + 'a>>>;
 
 #[derive(Debug)]
-pub(crate) struct LazyNamedAttrMap<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + 'a> {
-    named_attrs: RawNamedAttrMap<'a, ErrorNodeOr<'a, Emit>>,
+pub(crate) struct LazyNamedAttrMap<'a, AstType: IntoMir<'a> + 'a> {
+    named_attrs: RawNamedAttrMap<'a, ErrorNodeOr<'a, AstType::Target>>,
     _phantom_ast: PhantomData<AstType>,
 }
 
-impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
-    LazyNamedAttrMap<'a, Emit, AstType>
-{
+impl<'a, AstType: IntoMir<'a> + Clone> LazyNamedAttrMap<'a, AstType> {
     fn new_from_closure(
         ast_items: impl Iterator<Item = AstType>,
         ident_resolver: impl PathResolverFn<'a, AstType::IdentResolverOutput> + Clone,
@@ -51,7 +49,7 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
                         (
                             ident.clone(),
                             LazyLock::new(Box::new(|| statement.into_mir(ident_resolver))
-                                as Box<dyn FnOnce() -> ErrorNodeOr<'a, Emit>>),
+                                as Box<dyn FnOnce() -> ErrorNodeOr<'a, AstType::Target>>),
                         )
                     })
                     .collect()
@@ -82,24 +80,20 @@ impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit> + Clone>
 
     pub fn eval(&self) {
         self.named_attrs.iter().for_each(|item| {
-            let _: ErrorNodeOr<'_, Emit> = **item.1;
+            let _: ErrorNodeOr<'_, AstType::Target> = **item.1;
         });
     }
 }
 
-impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit>> Deref
-    for LazyNamedAttrMap<'a, Emit, AstType>
-{
-    type Target = RawNamedAttrMap<'a, ErrorNodeOr<'a, Emit>>;
+impl<'a, AstType: IntoMir<'a>> Deref for LazyNamedAttrMap<'a, AstType> {
+    type Target = RawNamedAttrMap<'a, ErrorNodeOr<'a, AstType::Target>>;
 
     fn deref(&self) -> &Self::Target {
         &self.named_attrs
     }
 }
 
-impl<'a, Emit: 'a, AstType: IntoMir<'a, Target = Emit>> DerefMut
-    for LazyNamedAttrMap<'a, Emit, AstType>
-{
+impl<'a, AstType: IntoMir<'a>> DerefMut for LazyNamedAttrMap<'a, AstType> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.named_attrs
     }

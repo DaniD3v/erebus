@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Crate<'a> {
-    exports: Option<LazyNamedAttrMap<'a, NamedStatement<'a>, TopLevelStatement>>,
+    exports: Option<LazyNamedAttrMap<'a, TopLevelStatement>>,
     _pin: PhantomPinned,
 }
 
