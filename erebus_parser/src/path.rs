@@ -8,6 +8,10 @@ use crate::{ident::Ident, parsable::ParsableParser, syntax_elements::PathSegment
 #[derive(Educe, Debug, Clone)]
 #[educe(PartialOrd, Ord, PartialEq, Eq)]
 pub struct Path {
+    /// The path segments in reverse order.
+    // Reverse order accelerates the common operation
+    // of popping the leading  segment of Path and
+    // creating a new Path with the remaining segments.
     segments: Vec<Ident>,
 
     #[educe(PartialOrd(ignore), PartialEq(ignore))]
@@ -15,11 +19,20 @@ pub struct Path {
 }
 
 impl Path {
+    pub fn remove_leading_segment(&mut self) -> Option<Ident> {
+        self.segments.pop()
+    }
+
+    pub fn len_segments(&self) -> usize {
+        self.segments.len()
+    }
+
     #[cfg(test)]
     pub fn test_value<const S: usize>(segments: [&str; S]) -> Self {
         let segments = segments
             .into_iter()
             .map(|ident_str| Ident::test_value(ident_str))
+            .rev()
             .collect();
 
         Self {
@@ -35,9 +48,13 @@ impl Parsable for Path {
             .separated_by(PathSegment::parser())
             .at_least(1)
             .collect::<Vec<_>>()
-            .map_with(|idents, ctx| Self {
-                segments: idents,
-                span: ctx.span(),
+            .map_with(|mut idents, ctx| {
+                idents.reverse();
+
+                Self {
+                    segments: idents,
+                    span: ctx.span(),
+                }
             })
     }
 }
