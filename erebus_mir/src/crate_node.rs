@@ -23,16 +23,18 @@ impl<'a> Crate<'a> {
         });
 
         let self_container_pointer = &raw const self_container;
+
+        // we have to ensure that self_container is not mutated after this
         self_container.exports = Some(unsafe {
             LazyNamedAttrMap::new_from_pointer(
                 root_module.iter_statements(),
                 self_container_pointer,
             )
         });
-
+        // this blocks `&mut` access to self_container
         let self_container = Box::into_pin(self_container);
-        self_container.exports.as_ref().unwrap().eval();
 
+        self_container.exports.as_ref().unwrap().eval();
         self_container
     }
 }

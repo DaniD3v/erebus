@@ -61,7 +61,7 @@ impl<'a, AstType: IntoMir<'a> + Clone> LazyNamedAttrMap<'a, AstType> {
 
     /// Safety:
     /// It needs to be guaranteed that `parent` is not
-    /// modified while this pointer is accessed.
+    /// modified while the LazyNamedAttrSet is evaluating.
     pub unsafe fn new_from_pointer<T: MirNode<Children = AstType::IdentResolverOutput> + 'a>(
         ast_items: impl Iterator<Item = AstType>,
         parent: *const T,
