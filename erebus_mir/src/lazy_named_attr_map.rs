@@ -1,7 +1,6 @@
 use std::{
     collections::BTreeMap,
     iter::once,
-    marker::PhantomData,
     ops::{Deref, DerefMut},
     sync::LazyLock,
 };
@@ -15,7 +14,6 @@ type RawNamedAttrMap<'a, Emit> = BTreeMap<Ident, LazyLock<Emit, Box<dyn FnOnce()
 #[derive(Debug)]
 pub(crate) struct LazyNamedAttrMap<'a, AstType: IntoMir<'a> + 'a> {
     named_attrs: RawNamedAttrMap<'a, ErrorNodeOr<'a, AstType::Target>>,
-    _phantom_ast: PhantomData<AstType>,
 }
 
 impl<'a, AstType: IntoMir<'a> + Clone> LazyNamedAttrMap<'a, AstType> {
@@ -54,8 +52,6 @@ impl<'a, AstType: IntoMir<'a> + Clone> LazyNamedAttrMap<'a, AstType> {
                     })
                     .collect()
             },
-
-            _phantom_ast: PhantomData,
         }
     }
 
